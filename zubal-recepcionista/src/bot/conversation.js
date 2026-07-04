@@ -1,4 +1,5 @@
 import { format, addDays } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { config } from '../config.js';
 import {
   getUpcomingBusinessDays,
@@ -6,6 +7,7 @@ import {
   findNextAvailableSlot,
   createAppointment,
   listMyAppointments,
+  listAppointmentHistory,
   cancelAppointment,
   rescheduleAppointment,
 } from '../calendar/googleCalendar.js';
@@ -24,7 +26,7 @@ function resetSession(clientId) {
   sessions.set(clientId, { step: 'menu', data: {} });
 }
 
-const diaLabel = (d) => format(d, "EEEE d 'de' MMMM");
+const diaLabel = (d) => format(d, "EEEE d 'de' MMMM", { locale: es });
 const primerNombre = (nombreCompleto) => (nombreCompleto || '').split(' ')[0] || '';
 
 /**
@@ -68,7 +70,10 @@ export async function handleIncoming({ clientId, clientLabel, text, buttonPayloa
 
 async function showMenu(clientId, provider, clientLabel) {
   const nombre = primerNombre(clientLabel);
-  const saludo = nombre ? `¡Hola, ${nombre}! 👋` : '¡Hola! 👋';
+  const yaHaVenido = (await listAppointmentHistory(clientId, 1)).length > 0;
+  const saludo = yaHaVenido
+    ? (nombre ? `¡Qué alegría verte de nuevo, ${nombre}! 😊` : '¡Qué alegría verte de nuevo! 😊')
+    : (nombre ? `¡Hola, ${nombre}! 👋` : '¡Hola! 👋');
   await provider.sendButtons(
     clientId,
     `${saludo}\nBienvenido/a a ${config.businessName}\n\n¿En qué te ayudo hoy? 😊`,
@@ -270,17 +275,34 @@ async function crearCitaFinal(clientId, clientLabel, provider, session) {
 
 async function verMisCitas(clientId, provider) {
   const citas = await listMyAppointments(clientId);
+  const historial = await listAppointmentHistory(clientId, 5);
   resetSession(clientId);
-  if (citas.length === 0) {
+
+  if (citas.length === 0 && historial.length === 0) {
     return provider.sendMessage(
       clientId,
       `Todavía no tienes ninguna cita 😊\nEscribe /start para reservar una.`
     );
   }
-  const lista = citas
-    .map((c) => `\n✂️ ${format(new Date(c.start.dateTime), "EEEE d 'de' MMMM 'a las' HH:mm")}`)
-    .join('');
-  await provider.sendMessage(clientId, `📋 Tus próximas citas:${lista}\n\n¡Nos vemos pronto! 💇‍♀️`);
+
+  let mensaje = '';
+  if (citas.length > 0) {
+    const lista = citas
+      .map((c) => `\n✂️ ${format(new Date(c.start.dateTime), "EEEE d 'de' MMMM 'a las' HH:mm", { locale: es })}`)
+      .join('');
+    mensaje += `📋 Tus próximas citas:${lista}\n\n`;
+  } else {
+    mensaje += `📋 No tienes citas próximas 😊\n\n`;
+  }
+
+  if (historial.length > 0) {
+    const lista = historial
+      .map((c) => `\n💇‍♀️ ${format(new Date(c.start.dateTime), "d 'de' MMMM", { locale: es })}`)
+      .join('');
+    mensaje += `🕐 Tu historial reciente:${lista}\n\n`;
+  }
+
+  await provider.sendMessage(clientId, `${mensaje}¡Nos vemos pronto! 💇‍♀️`);
 }
 
 // ========== CANCELAR CITA ==========
@@ -298,7 +320,7 @@ async function iniciarCancelacion(clientId, provider, session) {
     `¿Cuál quieres cancelar? 🗓️`,
     citas.map((c, i) => ({
       id: `cancel_${i}`,
-      label: format(new Date(c.start.dateTime), "d MMM 'a las' HH:mm"),
+      label: format(new Date(c.start.dateTime), "d MMM 'a las' HH:mm", { locale: es }),
     }))
   );
 }
@@ -335,7 +357,7 @@ async function iniciarModificacion(clientId, provider, session) {
     `¿Cuál quieres mover a otro horario? ✏️`,
     citas.map((c, i) => ({
       id: `mod_${i}`,
-      label: format(new Date(c.start.dateTime), "d MMM 'a las' HH:mm"),
+      label: format(new Date(c.start.dateTime), "d MMM 'a las' HH:mm", { locale: es }),
     }))
   );
 }

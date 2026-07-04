@@ -158,6 +158,27 @@ export async function listMyAppointments(clientId) {
 }
 
 /**
+ * Historial de citas PASADAS del cliente (hasta 1 año atrás). Es la "memoria"
+ * del bot: como vive en Google Calendar, sobrevive a reinicios del servidor
+ * y permite reconocer a clientes recurrentes y hacer seguimiento de sus cortes.
+ */
+export async function listAppointmentHistory(clientId, maxResults = 5) {
+  const unAnioAtras = new Date();
+  unAnioAtras.setFullYear(unAnioAtras.getFullYear() - 1);
+
+  const res = await calendar.events.list({
+    calendarId: config.google.calendarId,
+    timeMin: unAnioAtras.toISOString(),
+    timeMax: new Date().toISOString(),
+    privateExtendedProperty: `clientId=${clientId}`,
+    singleEvents: true,
+    orderBy: 'startTime',
+  });
+  const items = res.data.items || [];
+  return items.slice(-maxResults).reverse();
+}
+
+/**
  * Cancela una cita, pero SOLO si el clientId coincide. Seguridad crítica.
  */
 export async function cancelAppointment(clientId, eventId) {
