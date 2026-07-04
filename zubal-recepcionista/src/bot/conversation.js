@@ -1,5 +1,4 @@
-import { format, addDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { addDays } from 'date-fns';
 import { config } from '../config.js';
 import {
   getUpcomingBusinessDays,
@@ -26,8 +25,22 @@ function resetSession(clientId) {
   sessions.set(clientId, { step: 'menu', data: {} });
 }
 
-const diaLabel = (d) => format(d, "EEEE d 'de' MMMM", { locale: es });
-const horaLabel = (c) => format(new Date(c.start.dateTime), "d MMM 'a las' HH:mm", { locale: es });
+// Nombres en español escritos a mano: no dependemos de que la librería de
+// fechas cargue bien el locale (esto ya nos falló una vez en producción,
+// mostrando los días/meses en inglés pese a pedir locale "es").
+const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const MESES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
+const MESES_ABR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const dosDigitos = (n) => String(n).padStart(2, '0');
+
+const diaLabel = (d) => `${DIAS_SEMANA[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`;
+const horaLabel = (c) => {
+  const d = new Date(c.start.dateTime);
+  return `${d.getDate()} ${MESES_ABR[d.getMonth()]} a las ${dosDigitos(d.getHours())}:${dosDigitos(d.getMinutes())}`;
+};
 const primerNombre = (nombreCompleto) => (nombreCompleto || '').split(' ')[0] || '';
 
 /**
