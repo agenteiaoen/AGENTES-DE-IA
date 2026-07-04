@@ -7,7 +7,10 @@ import { handleIncoming } from './bot/conversation.js';
 const app = express();
 app.use(express.json());
 
-app.get('/health', (_req, res) => res.send('ok'));
+// Incluye un marcador de versión (fecha del último despliegue) para poder
+// confirmar desde fuera si Render está sirviendo el código más reciente.
+const DEPLOY_MARKER = 'fechas-es-manual-2026-07-04';
+app.get('/health', (_req, res) => res.send(`ok - ${DEPLOY_MARKER}`));
 
 app.listen(config.port, () => {
   console.log(`✅ Servidor escuchando en el puerto ${config.port}`);
