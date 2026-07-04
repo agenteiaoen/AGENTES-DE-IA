@@ -1,0 +1,22 @@
+{
+  "name": "zubal-recepcionista",
+  "version": "1.0.0",
+  "description": "Recepcionista automático por Telegram para ZubAL Estilistas - Sistema de agendamiento de citas con Google Calendar",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "telegraf": "^4.16.3",
+    "googleapis": "^140.0.1",
+    "dotenv": "^16.4.5",
+    "date-fns": "^3.6.0",
+    "date-fns-tz": "^3.1.3",
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
