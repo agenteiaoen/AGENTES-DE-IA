@@ -27,6 +27,7 @@ function resetSession(clientId) {
 }
 
 const diaLabel = (d) => format(d, "EEEE d 'de' MMMM", { locale: es });
+const horaLabel = (c) => format(new Date(c.start.dateTime), "d MMM 'a las' HH:mm", { locale: es });
 const primerNombre = (nombreCompleto) => (nombreCompleto || '').split(' ')[0] || '';
 
 /**
@@ -45,11 +46,11 @@ export async function handleIncoming({ clientId, clientLabel, text, buttonPayloa
     case 'menu':
       return handleMenu(clientId, clientLabel, input, provider, session);
     case 'reservar_servicio':
-      return handleElegirServicio(clientId, clientLabel, input, provider, session);
+      return handleElegirServicio(clientId, input, provider, session);
     case 'reservar_dia':
-      return handleElegirDia(clientId, clientLabel, input, provider, session);
+      return handleElegirDia(clientId, input, provider, session);
     case 'reservar_hora':
-      return handleElegirHora(clientId, clientLabel, input, provider, session);
+      return handleElegirHora(clientId, input, provider, session);
     case 'reservar_confirmar':
       return handleConfirmarReserva(clientId, clientLabel, input, provider, session);
     case 'esperando_alternativa':
@@ -173,7 +174,7 @@ async function iniciarReserva(clientId, provider, session) {
   );
 }
 
-async function handleElegirServicio(clientId, clientLabel, input, provider, session) {
+async function handleElegirServicio(clientId, input, provider, session) {
   const id = input.replace('srv_', '');
   const service = config.services.find((s) => s.id === id);
   if (!service) {
@@ -194,7 +195,7 @@ async function mostrarDias(clientId, provider, session, nextStep) {
   );
 }
 
-async function handleElegirDia(clientId, clientLabel, input, provider, session) {
+async function handleElegirDia(clientId, input, provider, session) {
   const idx = parseInt(input.replace('dia_', ''), 10);
   const dia = session.data.diasOfrecidos?.[idx];
   if (dia === undefined) {
@@ -219,7 +220,7 @@ async function handleElegirDia(clientId, clientLabel, input, provider, session) 
   );
 }
 
-async function handleElegirHora(clientId, clientLabel, input, provider, session) {
+async function handleElegirHora(clientId, input, provider, session) {
   const idx = parseInt(input.replace('hora_', ''), 10);
   const slot = session.data.slotsOfrecidos?.[idx];
   if (!slot) {
@@ -274,8 +275,10 @@ async function crearCitaFinal(clientId, clientLabel, provider, session) {
 // ========== VER MIS CITAS ==========
 
 async function verMisCitas(clientId, provider) {
-  const citas = await listMyAppointments(clientId);
-  const historial = await listAppointmentHistory(clientId, 5);
+  const [citas, historial] = await Promise.all([
+    listMyAppointments(clientId),
+    listAppointmentHistory(clientId, 5),
+  ]);
   resetSession(clientId);
 
   if (citas.length === 0 && historial.length === 0) {
@@ -287,18 +290,14 @@ async function verMisCitas(clientId, provider) {
 
   let mensaje = '';
   if (citas.length > 0) {
-    const lista = citas
-      .map((c) => `\n✂️ ${format(new Date(c.start.dateTime), "EEEE d 'de' MMMM 'a las' HH:mm", { locale: es })}`)
-      .join('');
+    const lista = citas.map((c) => `\n✂️ ${horaLabel(c)}`).join('');
     mensaje += `📋 Tus próximas citas:${lista}\n\n`;
   } else {
     mensaje += `📋 No tienes citas próximas 😊\n\n`;
   }
 
   if (historial.length > 0) {
-    const lista = historial
-      .map((c) => `\n💇‍♀️ ${format(new Date(c.start.dateTime), "d 'de' MMMM", { locale: es })}`)
-      .join('');
+    const lista = historial.map((c) => `\n💇‍♀️ ${horaLabel(c)}`).join('');
     mensaje += `🕐 Tu historial reciente:${lista}\n\n`;
   }
 
@@ -318,10 +317,7 @@ async function iniciarCancelacion(clientId, provider, session) {
   await provider.sendButtons(
     clientId,
     `¿Cuál quieres cancelar? 🗓️`,
-    citas.map((c, i) => ({
-      id: `cancel_${i}`,
-      label: format(new Date(c.start.dateTime), "d MMM 'a las' HH:mm", { locale: es }),
-    }))
+    citas.map((c, i) => ({ id: `cancel_${i}`, label: horaLabel(c) }))
   );
 }
 
@@ -355,10 +351,7 @@ async function iniciarModificacion(clientId, provider, session) {
   await provider.sendButtons(
     clientId,
     `¿Cuál quieres mover a otro horario? ✏️`,
-    citas.map((c, i) => ({
-      id: `mod_${i}`,
-      label: format(new Date(c.start.dateTime), "d MMM 'a las' HH:mm", { locale: es }),
-    }))
+    citas.map((c, i) => ({ id: `mod_${i}`, label: horaLabel(c) }))
   );
 }
 
