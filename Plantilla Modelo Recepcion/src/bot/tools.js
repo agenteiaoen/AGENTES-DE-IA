@@ -128,15 +128,19 @@ export function createToolExecutor(clientId) {
       case 'buscar_proximo_hueco': {
         const servicio = servicioPorId(args.servicioId);
         if (!servicio) return { error: 'servicio_desconocido' };
-        const desde = fromZonedTime(`${args.desde} 00:00:00`, config.timezone);
-        const alternativa = await findNextAvailableSlot(desde, servicio.duracionMin);
-        if (!alternativa) return { encontrado: false };
-        return {
-          encontrado: true,
-          fecha: fechaLabel(alternativa.day),
-          hora: alternativa.slot.label,
-          inicioISO: alternativa.slot.start.toISOString(),
-        };
+        try {
+          const desde = new Date(args.desde);
+          const alternativa = await findNextAvailableSlot(desde, servicio.duracionMin);
+          if (!alternativa) return { encontrado: false };
+          return {
+            encontrado: true,
+            fecha: fechaLabel(alternativa.day),
+            hora: alternativa.slot.label,
+            inicioISO: alternativa.slot.start.toISOString(),
+          };
+        } catch (err) {
+          return { error: `fecha_invalida: ${err.message}` };
+        }
       }
       case 'crear_cita': {
         const servicio = servicioPorId(args.servicioId);
