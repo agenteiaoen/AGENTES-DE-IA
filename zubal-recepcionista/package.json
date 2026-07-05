@@ -1,7 +1,7 @@
 {
   "name": "zubal-recepcionista",
   "version": "1.0.0",
-  "description": "Recepcionista automático por Telegram para ZubAL Estilistas - Sistema de agendamiento de citas con Google Calendar",
+  "description": "AgendeX - Asistente virtual por Telegram para ZubAL Estilistas - Sistema de agendamiento de citas con Google Calendar",
   "type": "module",
   "main": "src/index.js",
   "scripts": {

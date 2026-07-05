@@ -35,7 +35,7 @@ conversation.js ──► aiAgent.js ──► Gemini (system prompt con negocio
 ```
 Cliente: /start
 
-Bot: ¡Hola! 👋 Bienvenido/a a ZubAL Estilistas. ¿En qué te ayudo hoy?
+Bot: ¡Hola! 👋 Soy AgendeX, el asistente de ZubAL Estilistas. ¿En qué te ayudo hoy?
 
 Cliente: Hola, soy Marta, quiero un tinte
 

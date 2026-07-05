@@ -1,6 +1,6 @@
-# 💇‍♀️ ZubAL Estilistas - Recepcionista Virtual
+# 💇‍♀️ AgendeX - Asistente virtual de ZubAL Estilistas
 
-Un bot automático de Telegram que gestiona citas para ZubAL Estilistas. Reserva, modifica y cancela citas verificando disponibilidad real en Google Calendar.
+**AgendeX** es el asistente virtual por Telegram que gestiona citas para ZubAL Estilistas. Reserva, modifica y cancela citas verificando disponibilidad real en Google Calendar.
 
 ## ✨ Características
 
@@ -32,7 +32,7 @@ npm install
 Ve a Telegram y habla con [@BotFather](https://t.me/botfather):
 
 1. Envía `/newbot`
-2. Dale un nombre (ej: "ZubAL Recepcionista")
+2. Dale el nombre "AgendeX"
 3. Dale un username (ej: `@AgenteIA_Recepcionista_bot`)
 4. **Copia el token** que te devuelve
 
@@ -137,6 +137,7 @@ businessName: 'ZubAL Estilistas ✨',
 - **Las claves nunca se commitean** - `.env` está en `.gitignore`
 - **Verificación de disponibilidad en tiempo real** - Usa `freebusy.query` de Google Calendar para evitar dobles reservas
 - **El bot no da información fuera de tema** - El system prompt de `aiAgent.js` lo limita estrictamente a agendar/ver/cancelar/modificar citas de este negocio
+- **Identidad clara** - AgendeX se identifica con ese nombre si el cliente pregunta, sin fingir ser otra cosa
 
 ## 🚀 Deployar en la nube
 
@@ -171,4 +172,4 @@ Si algo no funciona:
 
 ---
 
-Hecho con ❤️ para ZubAL Estilistas 💇‍♀️✨
+AgendeX, hecho con ❤️ para ZubAL Estilistas 💇‍♀️✨

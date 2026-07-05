@@ -172,4 +172,4 @@ Después de deployar:
 
 ---
 
-¡Felicidades, tu recepcionista virtual está viva! 🎉
+¡Felicidades, AgendeX ya está viva! 🎉

@@ -14,6 +14,7 @@ Agente IA - Recepcionista/
 ```
 
 ### zubal-recepcionista (producción)
+- Nombre oficial del asistente: **AgendeX** (así se presenta el bot y así aparece en Telegram)
 - Bot de Telegram: `@AgenteIA_Recepcionista_bot`
 - Desplegado en Render (plan gratuito): `https://zubal-bot.onrender.com`, modo **webhook**
 - Repo GitHub: `github.com/agenteiaoen/AGENTES-DE-IA` (rama `master`), subcarpeta `zubal-recepcionista`

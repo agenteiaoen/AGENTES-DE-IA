@@ -12,7 +12,7 @@ Aquí te explicamos cómo crear el bot de Telegram y obtener el token.
 
 1. Envía el comando `/newbot`
 2. BotFather te preguntará:
-   - **"¿Qué nombre quieres para tu bot?"** → Escribe algo como: `ZubAL Recepcionista Bot`
+   - **"¿Qué nombre quieres para tu bot?"** → Escribe: `AgendeX`
    - **"¿Qué nombre de usuario?"** → Escribe algo como: `AgenteIA_Recepcionista_bot` (debe terminar en `_bot`)
 
 3. BotFather te responderá algo como:

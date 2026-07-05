@@ -1,13 +1,13 @@
 # 📅 Configuración de Google Calendar
 
-Este bot necesita acceso a Google Calendar de ZubAL Estilistas para leer disponibilidad y crear citas. Aquí te explicamos cómo configurarlo.
+AgendeX necesita acceso a Google Calendar de ZubAL Estilistas para leer disponibilidad y crear citas. Aquí te explicamos cómo configurarlo.
 
 ## Paso 1: Crear un proyecto en Google Cloud
 
 1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
 2. Si es la primera vez, crea una cuenta
 3. Haz clic en **"Crear proyecto"** (arriba a la izquierda)
-4. Dale un nombre (ej: "ZubAL Recepcionista")
+4. Dale un nombre (ej: "AgendeX ZubAL")
 5. Espera a que se cree (1-2 minutos)
 
 ## Paso 2: Activar Google Calendar API
