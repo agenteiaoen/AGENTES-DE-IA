@@ -108,7 +108,7 @@ export const toolDeclarations = [
  * por clausura, así que es imposible que un cliente vea o toque las citas de
  * otro por muy convincente que sea el mensaje que escriba (inyección de prompt incluida).
  */
-export function createToolExecutor(clientId) {
+export function createToolExecutor(clientId, clientPhone) {
   function servicioPorId(servicioId) {
     return config.services.find((s) => s.id === servicioId) || null;
   }
@@ -154,6 +154,7 @@ export function createToolExecutor(clientId) {
         const result = await createAppointment({
           clientId,
           clientLabel: args.nombreCliente,
+          clientPhone,
           serviceName: servicio.nombre,
           start,
           end,

@@ -119,23 +119,27 @@ export async function isSlotStillFree(start, end) {
 /**
  * Crea una cita en Google Calendar. El clientId se guarda oculto en
  * extendedProperties para seguridad (cliente solo puede cancelar/modificar su propia cita).
+ * clientPhone es el teléfono del cliente si el proveedor de mensajería lo
+ * conoce (en WhatsApp será siempre el clientId; en Telegram solo si lo comparte).
  */
-export async function createAppointment({ clientId, clientLabel, serviceName, start, end }) {
+export async function createAppointment({ clientId, clientLabel, clientPhone, serviceName, start, end }) {
   const stillFree = await isSlotStillFree(start, end);
   if (!stillFree) {
     return { ok: false, reason: 'slot_taken' };
   }
+  const lineaTelefono = clientPhone ? `\nTeléfono: ${clientPhone}` : '';
   const res = await calendar.events.insert({
     calendarId: config.google.calendarId,
     requestBody: {
       summary: `${serviceName} — ${clientLabel || clientId}`,
-      description: `Cita reservada automáticamente por ${config.businessName}\nCliente: ${clientLabel || clientId}`,
+      description: `Cita reservada automáticamente por ${config.businessName}\nCliente: ${clientLabel || clientId}\nServicio: ${serviceName}${lineaTelefono}`,
       start: { dateTime: start.toISOString(), timeZone: config.timezone },
       end: { dateTime: end.toISOString(), timeZone: config.timezone },
       extendedProperties: {
         private: {
           clientId: String(clientId),
           clientLabel: clientLabel || '',
+          clientPhone: clientPhone || '',
         },
       },
     },

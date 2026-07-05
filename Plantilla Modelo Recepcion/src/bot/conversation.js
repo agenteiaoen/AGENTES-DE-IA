@@ -6,7 +6,7 @@ import { handleTurn, resetSession } from './aiAgent.js';
  * decide qué decir y qué herramientas de calendario llamar. Ver
  * docs/conversation-flow.md para el detalle de diseño.
  */
-export async function handleIncoming({ clientId, clientLabel, text }, provider) {
+export async function handleIncoming({ clientId, clientLabel, text, clientPhone }, provider) {
   const input = (text || '').trim();
 
   if (input === '/start') {
@@ -14,11 +14,12 @@ export async function handleIncoming({ clientId, clientLabel, text }, provider) 
     const saludo = await handleTurn(
       clientId,
       clientLabel,
-      'El cliente acaba de abrir la conversación. Salúdalo con calidez y pregúntale en qué le puedes ayudar.'
+      'El cliente acaba de abrir la conversación. Salúdalo con calidez y pregúntale en qué le puedes ayudar.',
+      clientPhone
     );
     return provider.sendMessage(clientId, saludo);
   }
 
-  const respuesta = await handleTurn(clientId, clientLabel, input);
+  const respuesta = await handleTurn(clientId, clientLabel, input, clientPhone);
   return provider.sendMessage(clientId, respuesta);
 }

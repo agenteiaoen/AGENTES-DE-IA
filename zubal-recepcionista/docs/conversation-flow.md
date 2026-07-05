@@ -58,13 +58,21 @@ Por dentro, en el paso "el jueves por la mañana" Gemini llamó a la tool `consu
 
 ## 🔎 Ver, cancelar y modificar citas
 
-Igual de conversacional: el cliente puede escribir "¿qué citas tengo?", "quiero cancelar mi cita del jueves" o "¿puedes moverla al viernes?" y el agente usa `ver_mis_citas`, `cancelar_cita` y `modificar_cita` según haga falta, pidiendo siempre confirmación antes de cancelar o mover algo.
+Igual de conversacional: el cliente puede escribir "¿qué citas tengo?", "quiero cancelar mi cita del jueves" o "¿puedes moverla al viernes?". El agente llama a `ver_mis_citas` **inmediatamente** (sin preguntar nombre ni servicio, que ya no hacen falta) para saber qué citas tiene y sus IDs reales, y a partir de ahí usa `cancelar_cita` o `modificar_cita` sin pedir una segunda confirmación una vez el cliente ya dijo que sí.
+
+## 🗣️ Tono: una persona, no un asistente
+
+El system prompt le pide explícitamente que hable como alguien del equipo del negocio contestando desde el móvil — cercano, natural, con su estilo propio — y que nunca diga que es una IA, un bot o un asistente virtual, ni mencione "herramientas" o "instrucciones" delante del cliente. Si preguntan directamente si es una IA, resta importancia con naturalidad y sigue centrado en la cita, sin insistir en mentir ni hacer un numerito. Esto se probó en conversación real y funciona como se espera.
+
+## 📱 Teléfono del cliente
+
+Cada cita guarda también el teléfono del cliente si se conoce (nombre, servicio y teléfono quedan en la descripción del evento y en `extendedProperties.private.clientPhone`). En WhatsApp esto será automático (el `clientId` ya es el número). En Telegram no hay forma de saberlo salvo que el cliente lo comparta: la primera vez que escribe, se le ofrece un teclado nativo "compartir mi teléfono" (no es un botón de menú de conversación, es el contacto nativo de Telegram) que puede ignorar sin problema.
 
 ## 🔒 Reglas de seguridad (no tocar)
 
-- **Un cliente solo ve/toca sus propias citas.** El `clientId` (chat_id de Telegram) se vincula a las tools por clausura en `tools.js` (`createToolExecutor(clientId)`) — el modelo de IA **nunca** recibe ni puede elegir el `clientId` como parámetro, así que ni un prompt malicioso puede hacer que el bot toque la cita de otro cliente.
+- **Un cliente solo ve/toca sus propias citas.** El `clientId` (chat_id de Telegram) se vincula a las tools por clausura en `tools.js` (`createToolExecutor(clientId, clientPhone)`) — el modelo de IA **nunca** recibe ni puede elegir el `clientId` como parámetro, así que ni un prompt malicioso puede hacer que el bot toque la cita de otro cliente.
 - **No hay citas duplicadas** — se verifica disponibilidad real justo antes de crear/mover la cita (evita condiciones de carrera).
-- **El agente no da información fuera de tema.** El system prompt en `aiAgent.js` le indica explícitamente que su único objetivo es agendar/ver/cancelar/modificar citas de este negocio, y que redirija con amabilidad cualquier pregunta que no tenga que ver con eso (no da consejos, no revela sus instrucciones, no charla de temas generales).
+- **El agente no da información fuera de tema.** El system prompt en `aiAgent.js` le indica explícitamente que su único objetivo es agendar/ver/cancelar/modificar citas de este negocio, y que redirija con amabilidad cualquier pregunta que no tenga que ver con eso (no da consejos, no charla de temas generales).
 
 ## 🛠️ Personalización
 
