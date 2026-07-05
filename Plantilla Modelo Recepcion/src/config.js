@@ -13,9 +13,12 @@ export const config = {
 
   // Servicios que ofrece el negocio, con duración en minutos cada uno.
   // Si solo hay un servicio, el bot se salta el paso de "elegir servicio".
+  // "aliases" son las palabras que el cliente puede escribir en lenguaje
+  // natural (el bot no usa botones para elegir servicio, entiende texto libre
+  // como "quiero un corte de pelo" o "necesito manicura").
   services: [
-    { id: 'servicio1', nombre: 'Servicio de ejemplo 1', duracionMin: 30 },
-    { id: 'servicio2', nombre: 'Servicio de ejemplo 2', duracionMin: 60 },
+    { id: 'servicio1', nombre: 'Servicio de ejemplo 1', duracionMin: 30, aliases: ['ejemplo1', 'corte de pelo', 'corte'] },
+    { id: 'servicio2', nombre: 'Servicio de ejemplo 2', duracionMin: 60, aliases: ['ejemplo2', 'uñas', 'manicura'] },
   ],
 
   // Horario laboral: 0 = domingo, 1 = lunes ... 6 = sábado.

@@ -21,11 +21,14 @@ Bienvenido/a a Mi Negocio            Bienvenido/a a Mi Negocio
 Cliente: /start → [📅 Reservar cita]
 
 Bot: ¡Genial! ✨
-     ¿Qué servicio te gustaría?
+     ¿Cómo te llamas?
 
-     [Servicio de ejemplo 1] [Servicio de ejemplo 2]
+Cliente: María
 
-Cliente: [elige un servicio]
+Bot: Encantada de conocerte, María 😊
+     ¿Qué necesitas hoy? (por ejemplo: Servicio de ejemplo 1)
+
+Cliente: quiero uñas
 
 Bot: 📆 ¿Qué día te viene mejor?
 
@@ -128,4 +131,6 @@ Para un negocio nuevo, **solo hace falta editar `src/config.js`** (nombre, servi
 
 ## 🗣️ Sobre el lenguaje natural
 
-El bot está diseñado para ser simple y robusto: los clientes eligen de **botones**, no escriben texto libre para fechas/horas. Esto evita errores de interpretación. Si en el futuro se quiere añadir comprensión de lenguaje natural ("el jueves a las 5"), se puede extender `conversation.js` apoyándose en la API de Claude, pero no es necesario para que el bot funcione bien.
+El nombre del cliente y el servicio que necesita se piden como **texto libre**, no con botones: el bot pregunta "¿Cómo te llamas?" y "¿Qué necesitas hoy?", y hace matching contra el nombre y los `aliases` de cada servicio en `config.js` (ver `matchServicio` en `conversation.js`). Si el cliente escribe algo que no reconoce, se lo dice y le muestra la lista de servicios disponibles para que lo intente de nuevo.
+
+Día y hora, en cambio, se siguen ofreciendo con **botones**: pedir al cliente que escriba "el jueves a las 5" obligaría a parsear fechas en lenguaje natural, lo cual falla más de lo que acierta en un MVP. Si en el futuro se quiere añadir comprensión de lenguaje natural también para fechas, se puede extender `conversation.js` apoyándose en la API de Claude, pero no es necesario para que el bot funcione bien.

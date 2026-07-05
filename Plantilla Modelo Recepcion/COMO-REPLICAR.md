@@ -20,7 +20,7 @@ Es el **único archivo que necesitas tocar**. Rellena:
 
 - `businessName`: nombre tal como lo verá el cliente
 - `timezone`: zona horaria del negocio (formato IANA)
-- `services`: lista de servicios con su duración en minutos
+- `services`: lista de servicios con su duración en minutos y `aliases` (palabras que el cliente puede escribir en texto libre para pedir ese servicio, ej. "corte", "corte de pelo")
 - `businessHours`: horario de apertura por día de la semana
 - `daysAhead`, `slotStepMin`, `maxCitasPorCliente`: ajustes opcionales, los valores por defecto sirven para la mayoría de negocios
 
@@ -50,7 +50,7 @@ npm start
 
 Escribe `/start` al bot en Telegram y comprueba:
 - Que el menú aparece con el nombre correcto del negocio
-- Que "Reservar cita" muestra los servicios que configuraste
+- Que "Reservar cita" te pregunta el nombre y luego reconoce el servicio al escribirlo en texto libre (prueba con el nombre completo y con un alias corto de los que configuraste)
 - Que los huecos ofrecidos respetan el horario que pusiste
 - Que se crea el evento en el Google Calendar correcto
 

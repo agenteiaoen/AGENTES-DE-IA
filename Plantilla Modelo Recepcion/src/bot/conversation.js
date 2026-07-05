@@ -43,6 +43,37 @@ const horaLabel = (c) => {
 };
 const primerNombre = (nombreCompleto) => (nombreCompleto || '').split(' ')[0] || '';
 
+// Quita acentos y símbolos (emojis incluidos) para comparar texto libre del
+// cliente contra los nombres/alias de servicios sin depender de mayúsculas ni tildes.
+const quitarAcentos = (str) => str.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+const normalizar = (str) =>
+  quitarAcentos(String(str || '').toLowerCase())
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/**
+ * Busca qué servicio quiso decir el cliente a partir de texto libre
+ * ("quiero un corte de pelo", "uñas porfa"...), comparando contra el nombre
+ * y los alias configurados. Si varios coinciden, gana la coincidencia más larga.
+ */
+function matchServicio(texto, services) {
+  const t = normalizar(texto);
+  if (!t) return null;
+  let mejor = null;
+  let mejorLongitud = 0;
+  for (const s of services) {
+    for (const candidato of [s.nombre, ...(s.aliases || [])]) {
+      const cn = normalizar(candidato);
+      if (cn && t.includes(cn) && cn.length > mejorLongitud) {
+        mejor = s;
+        mejorLongitud = cn.length;
+      }
+    }
+  }
+  return mejor;
+}
+
 /**
  * Punto de entrada único del bot. Procesa mensajes de texto y clics de botones.
  */
@@ -58,6 +89,8 @@ export async function handleIncoming({ clientId, clientLabel, text, buttonPayloa
   switch (session.step) {
     case 'menu':
       return handleMenu(clientId, clientLabel, input, provider, session);
+    case 'reservar_nombre':
+      return handleNombreCliente(clientId, input, provider, session);
     case 'reservar_servicio':
       return handleElegirServicio(clientId, input, provider, session);
     case 'reservar_dia':
@@ -174,24 +207,37 @@ async function iniciarReserva(clientId, provider, session) {
     );
   }
 
+  session.step = 'reservar_nombre';
+  await provider.sendMessage(clientId, `¡Genial! ✨\n¿Cómo te llamas?`);
+}
+
+async function handleNombreCliente(clientId, input, provider, session) {
+  const nombre = (input || '').trim();
+  if (!nombre || nombre.startsWith('/')) {
+    return provider.sendMessage(clientId, 'No te he entendido bien 😅\n¿Cómo te llamas?');
+  }
+  session.data.nombreCliente = nombre;
+
   if (config.services.length === 1) {
     session.data.service = config.services[0];
     return mostrarDias(clientId, provider, session, 'reservar_dia');
   }
 
   session.step = 'reservar_servicio';
-  await provider.sendButtons(
+  await provider.sendMessage(
     clientId,
-    `¡Genial! ✨\n¿Qué servicio te gustaría?`,
-    config.services.map((s) => ({ id: `srv_${s.id}`, label: s.nombre }))
+    `Encantada de conocerte, ${primerNombre(nombre)} 😊\n¿Qué necesitas hoy? (por ejemplo: ${config.services[0].nombre})`
   );
 }
 
 async function handleElegirServicio(clientId, input, provider, session) {
-  const id = input.replace('srv_', '');
-  const service = config.services.find((s) => s.id === id);
+  const service = matchServicio(input, config.services);
   if (!service) {
-    return provider.sendMessage(clientId, 'Elige un servicio de la lista, porfa 😊');
+    const lista = config.services.map((s) => s.nombre).join(', ');
+    return provider.sendMessage(
+      clientId,
+      `Uy, no he identificado ese servicio 😕\nOfrecemos: ${lista}\n¿Cuál de estos necesitas?`
+    );
   }
   session.data.service = service;
   return mostrarDias(clientId, provider, session, 'reservar_dia');
@@ -260,10 +306,10 @@ async function handleConfirmarReserva(clientId, clientLabel, input, provider, se
 }
 
 async function crearCitaFinal(clientId, clientLabel, provider, session) {
-  const { service, slotElegido, diaElegido } = session.data;
+  const { service, slotElegido, diaElegido, nombreCliente } = session.data;
   const result = await createAppointment({
     clientId,
-    clientLabel,
+    clientLabel: nombreCliente || clientLabel,
     serviceName: service.nombre,
     start: slotElegido.start,
     end: slotElegido.end,

@@ -51,7 +51,7 @@ Agente Modelo Recepcion/
 
 1. **Google Calendar es la única fuente de verdad.** No hace falta base de datos: cada cita guarda el `clientId` de Telegram oculto en el evento, y ese campo es lo que impide que un cliente vea o cancele la cita de otro.
 2. **Todo negocio nuevo solo requiere tocar `config.js`.** Si te encuentras editando `conversation.js` o `googleCalendar.js` para algo que no sea el tono de los mensajes, probablemente el cambio debería ir en `config.js` en su lugar.
-3. **Botones, no texto libre, para fechas/horas.** Evita errores de interpretación y funciona mejor en móvil.
+3. **Nombre y servicio se piden en texto libre; fechas/horas siguen con botones.** El cliente escribe cómo se llama y qué necesita (el bot compara contra `aliases` en `config.js`), pero elige día/hora de una lista para evitar errores de interpretación de fechas.
 4. **Memoria simple y sin sobre-ingeniería.** La sesión de conversación vive en memoria (se resetea si el proceso reinicia) y el historial de citas vive en Google Calendar. No añadas Redis ni base de datos salvo que el negocio realmente lo necesite (alto volumen, varias instancias).
 5. **Webhook en producción, polling en local.** Esto ya está resuelto en `telegramProvider.js` vía la variable `PUBLIC_URL` — no hace falta reimplementarlo.
 
