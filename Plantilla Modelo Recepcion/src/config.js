@@ -52,7 +52,11 @@ export const config = {
   },
 
   // Modelo de IA (Google Gemini) que lleva la conversación en lenguaje
-  // natural. gemini-2.5-flash es rápido y barato, de sobra para chat.
+  // natural. En el nivel gratuito, gemini-2.5-flash tiene un tope de 5
+  // peticiones/minuto pero sin límite diario tan bajo como flash-lite (que
+  // en proyectos nuevos puede limitarse a ~20/día) — mejor para conversación
+  // real espaciada en el tiempo. Si el negocio crece, activa facturación en
+  // Google Cloud (sigue siendo muy barato) para subir estos límites.
   gemini: {
     apiKey: process.env.GEMINI_API_KEY,
     model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
