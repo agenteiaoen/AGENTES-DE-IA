@@ -6,14 +6,16 @@ export const config = {
   businessName: 'ZubAL Estilistas ✨',
   timezone: 'Europe/Madrid',
 
-  // Servicios de peluquería con duración en minutos
+  // Servicios de peluquería con duración en minutos.
+  // "aliases" son las palabras que el cliente puede escribir en lenguaje
+  // natural (el bot ya no usa botones para elegir servicio, hace matching de texto libre).
   services: [
-    { id: 'corte', nombre: '✂️ Corte de Cabello', duracionMin: 30 },
-    { id: 'tinte', nombre: '🎨 Tinte', duracionMin: 60 },
-    { id: 'peinado', nombre: '💇‍♀️ Peinado', duracionMin: 30 },
-    { id: 'alisado', nombre: '🌊 Alisado/Ondulado', duracionMin: 90 },
-    { id: 'extension', nombre: '💆‍♀️ Extensiones', duracionMin: 120 },
-    { id: 'tratamiento', nombre: '🧴 Tratamiento Capilar', duracionMin: 45 },
+    { id: 'corte', nombre: '✂️ Corte de Cabello', duracionMin: 30, aliases: ['corte', 'cortar', 'pelo', 'corte de pelo'] },
+    { id: 'tinte', nombre: '🎨 Tinte', duracionMin: 60, aliases: ['tinte', 'teñir', 'color', 'tintar'] },
+    { id: 'peinado', nombre: '💇‍♀️ Peinado', duracionMin: 30, aliases: ['peinado', 'peinar'] },
+    { id: 'alisado', nombre: '🌊 Alisado/Ondulado', duracionMin: 90, aliases: ['alisado', 'alisar', 'ondulado', 'ondular', 'planchado'] },
+    { id: 'extension', nombre: '💆‍♀️ Extensiones', duracionMin: 120, aliases: ['extension', 'extensiones'] },
+    { id: 'tratamiento', nombre: '🧴 Tratamiento Capilar', duracionMin: 45, aliases: ['tratamiento', 'mascarilla', 'hidratacion', 'hidratación'] },
   ],
 
   // Horario laboral: 0 = domingo, 1 = lunes, 6 = sábado

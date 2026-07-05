@@ -23,11 +23,14 @@ Bot: [Menú principal]
 
 Cliente: [toca "📅 Reservar cita"]
 
-Bot: ✨ Perfecto, ¿qué servicio te gustaría?
-     
-     [✂️ Corte de Cabello] [🎨 Tinte] [💇‍♀️ Peinado] ...
+Bot: ✨ ¡Genial! ¿Cómo te llamas?
 
-Cliente: [elige "✂️ Corte de Cabello"]
+Cliente: Ana
+
+Bot: Encantada de conocerte, Ana 😊
+     ¿Qué necesitas hoy? (por ejemplo: Corte de Cabello)
+
+Cliente: quiero un tinte
 
 Bot: 📆 Elige el día que prefieres:
      
@@ -156,6 +159,6 @@ await provider.sendMessage(clientId, `¡Hola! 👋 ¿Cómo te puedo ayudar hoy e
 
 ---
 
-**Nota:** El bot está diseñado para ser simple y robusta. No incluye lenguaje natural (NLP) para evitar errores. Los clientes eligen de botones, no escriben texto libre.
+**Nota:** El nombre del cliente y el servicio que necesita se piden como texto libre (el bot entiende frases como "quiero un tinte" comparando contra `aliases` en `config.js`). Día y hora se siguen ofreciendo con botones para evitar errores de interpretación de fechas.
 
-Si en el futuro quieres añadir NLP (entender "el jueves a las 5"), se puede hacer extendiendo `conversation.js` con la API de Claude. Ver `docs/extend-with-claude.md` (próximamente).
+Si en el futuro quieres añadir NLP también para fechas (entender "el jueves a las 5"), se puede hacer extendiendo `conversation.js` con la API de Claude. Ver `docs/extend-with-claude.md` (próximamente).

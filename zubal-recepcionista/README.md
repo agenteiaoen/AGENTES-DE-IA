@@ -4,7 +4,7 @@ Un bot automático de Telegram que gestiona citas para ZubAL Estilistas. Reserva
 
 ## ✨ Características
 
-- 📅 **Reservar citas** - Clientes eligen servicio, día y hora
+- 📅 **Reservar citas** - El cliente dice su nombre y qué necesita en texto libre (ej. "un tinte"), y elige día/hora de una lista
 - 🔎 **Ver mis citas** - Lista de citas reservadas
 - ✏️ **Modificar cita** - Cambiar fecha/hora de una cita
 - ❌ **Cancelar cita** - Anular reserva si hay imprevisto
@@ -93,11 +93,13 @@ Edita `src/config.js` y actualiza el array `services`:
 
 ```javascript
 services: [
-  { id: 'corte', nombre: '✂️ Corte de Cabello', duracionMin: 30 },
-  { id: 'tinte', nombre: '🎨 Tinte', duracionMin: 60 },
+  { id: 'corte', nombre: '✂️ Corte de Cabello', duracionMin: 30, aliases: ['corte', 'cortar', 'pelo'] },
+  { id: 'tinte', nombre: '🎨 Tinte', duracionMin: 60, aliases: ['tinte', 'teñir', 'color'] },
   // Añade los tuyos aquí
 ],
 ```
+
+`aliases` son las palabras que el cliente puede escribir en texto libre para pedir ese servicio (el bot ya no usa botones para esto, entiende frases como "quiero un tinte").
 
 ### Cambiar horario laboral
 
