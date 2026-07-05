@@ -1,4 +1,4 @@
-import { Telegraf, Markup } from 'telegraf';
+import { Telegraf } from 'telegraf';
 import { config } from '../config.js';
 
 /**
@@ -21,12 +21,6 @@ export function createTelegramProvider(onMessage) {
     async sendMessage(clientId, text) {
       await bot.telegram.sendMessage(clientId, text);
     },
-    async sendButtons(clientId, text, buttons) {
-      const keyboard = Markup.inlineKeyboard(
-        buttons.map((b) => [Markup.button.callback(b.label, b.id)])
-      );
-      await bot.telegram.sendMessage(clientId, text, keyboard);
-    },
     async launch(app) {
       bot.on('text', async (ctx) => {
         try {
@@ -40,23 +34,6 @@ export function createTelegramProvider(onMessage) {
           );
         } catch (err) {
           console.error('Error procesando mensaje:', err);
-          await ctx.reply('😅 Ha ocurrido un error inesperado. Escribe /start para volver a intentarlo.').catch(() => {});
-        }
-      });
-
-      bot.on('callback_query', async (ctx) => {
-        await ctx.answerCbQuery().catch(() => {});
-        try {
-          await onMessage(
-            {
-              clientId: String(ctx.from.id),
-              clientLabel: nombreReal(ctx.from),
-              buttonPayload: ctx.callbackQuery.data,
-            },
-            provider
-          );
-        } catch (err) {
-          console.error('Error procesando botón:', err);
           await ctx.reply('😅 Ha ocurrido un error inesperado. Escribe /start para volver a intentarlo.').catch(() => {});
         }
       });

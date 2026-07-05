@@ -1,164 +1,75 @@
 # 💬 Flujo de Conversación
 
-Este documento explica cómo fluye una conversación típica con el bot.
+El bot ya no usa una máquina de estados con botones: cada mensaje del cliente
+se manda tal cual a un agente de IA (Google Gemini, ver `src/bot/aiAgent.js`)
+que lleva la conversación en lenguaje natural y decide qué herramientas de
+calendario llamar (`src/bot/tools.js`). Esto imita cómo se comportará el bot
+el día que se migre a WhatsApp (sin botones, conversación fluida).
 
-## 📌 Menú principal
-
-Cuando un cliente envía `/start` o toca el botón "Menú", ve:
+## 🧠 Cómo funciona por dentro
 
 ```
-👋 ¡Hola! Bienvenido/a a ZubAL Estilistas ✨
-
-¿Qué quieres hacer hoy?
-
-[📅 Reservar cita] [🔎 Ver mis citas] [❌ Cancelar cita] [✏️ Modificar cita]
+Cliente escribe texto
+        │
+        ▼
+conversation.js ──► aiAgent.js ──► Gemini (system prompt con negocio,
+        ▲               │          servicios, horario y fecha de hoy)
+        │               ▼
+        │        ¿Gemini pide llamar a una tool?
+        │               │ sí
+        │               ▼
+        │        tools.js ejecuta la función real
+        │        (consultar Calendar, crear cita...)
+        │               │
+        │               └──► resultado real vuelve a Gemini
+        │                    (puede encadenar varias tools)
+        │
+        └── texto final de Gemini → se envía al cliente
 ```
 
-## 📅 Flujo: Reservar cita
+- El **historial de la conversación** vive en memoria por `clientId` (se resetea con `/start` o si el proceso se reinicia).
+- El **historial de citas pasadas/futuras** vive en Google Calendar, no en la conversación — por eso el bot puede "recordar" a un cliente recurrente aunque la sesión se resetee.
+
+## 📅 Ejemplo de conversación: reservar
 
 ```
 Cliente: /start
 
-Bot: [Menú principal]
+Bot: ¡Hola! 👋 Bienvenido/a a ZubAL Estilistas. ¿En qué te ayudo hoy?
 
-Cliente: [toca "📅 Reservar cita"]
+Cliente: Hola, soy Marta, quiero un tinte
 
-Bot: ✨ ¡Genial! ¿Cómo te llamas?
+Bot: Encantada, Marta 😊 ¿Qué día te viene bien?
 
-Cliente: Ana
+Cliente: el jueves por la mañana
 
-Bot: Encantada de conocerte, Ana 😊
-     ¿Qué necesitas hoy? (por ejemplo: Corte de Cabello)
+Bot: Déjame mirar... el jueves tengo hueco a las 10:00 y a las 11:30 para el tinte. ¿Cuál prefieres?
 
-Cliente: quiero un tinte
+Cliente: a las 10
 
-Bot: 📆 Elige el día que prefieres:
-     
-     [Monday 4 Nov] [Tuesday 5 Nov] [Wednesday 6 Nov] ...
+Bot: Perfecto, confirmamos: Tinte el jueves 9 de julio a las 10:00. ¿Todo correcto?
 
-Cliente: [elige "Tuesday 5 Nov"]
+Cliente: sí
 
-Bot: ⏰ Huecos libres el Tuesday 5 Nov. ¿Cuál te viene bien?
-     
-     [10:00h] [10:30h] [11:00h] [14:00h] ...
-
-Cliente: [elige "10:30h"]
-
-Bot: ✅ Confirma tu cita:
-     
-     ✂️ Corte de Cabello
-     📅 Tuesday 5 Nov
-     ⏰ 10:30h
-     
-     ¿Correcto?
-     
-     [✅ Sí, reservar] [↩️ Cancelar]
-
-Cliente: [toca "✅ Sí, reservar"]
-
-Bot: 🎉 ¡Cita reservada!
-     
-     ✂️ Corte de Cabello
-     📅 Tuesday 5 Nov
-     ⏰ 10:30h
-     
-     ¡Te esperamos! 💇‍♀️✨
+Bot: ¡Listo! 🎉 Tu tinte queda reservado el jueves 9 de julio a las 10:00. ¡Te esperamos!
 ```
 
-## 🔎 Flujo: Ver mis citas
+Por dentro, en el paso "el jueves por la mañana" Gemini llamó a la tool `consultar_huecos` con el día real (nunca inventa disponibilidad), y en el "sí" final llamó a `crear_cita`.
 
-```
-Cliente: /start → [Menú] → [🔎 Ver mis citas]
+## 🔎 Ver, cancelar y modificar citas
 
-Bot: 📋 Tus próximas citas:
-     
-     ✂️ Tuesday 5 Nov a las 10:30
-     ✂️ Friday 8 Nov a las 16:00
-     
-     ¡Que disfrutes! 💇‍♀️
-```
+Igual de conversacional: el cliente puede escribir "¿qué citas tengo?", "quiero cancelar mi cita del jueves" o "¿puedes moverla al viernes?" y el agente usa `ver_mis_citas`, `cancelar_cita` y `modificar_cita` según haga falta, pidiendo siempre confirmación antes de cancelar o mover algo.
 
-Si no tiene citas:
+## 🔒 Reglas de seguridad (no tocar)
 
-```
-Bot: 😅 No tienes ninguna cita reservada.
-     
-     Escribe /start para reservar una. ¡Te esperamos! 💇‍♀️
-```
-
-## ❌ Flujo: Cancelar cita
-
-```
-Cliente: /start → [Menú] → [❌ Cancelar cita]
-
-Bot: ⚠️ ¿Cuál de tus citas quieres cancelar?
-     
-     (No te preocupes, siempre puedes reservar otra)
-     
-     [5 Nov a las 10:30] [8 Nov a las 16:00]
-
-Cliente: [elige "5 Nov a las 10:30"]
-
-Bot: ✅ Cita cancelada.
-     
-     ¡Lo sentimos que no puedas venir! 
-     Si lo necesitas, escribe /start para reservar otra. 😊
-```
-
-## ✏️ Flujo: Modificar cita
-
-```
-Cliente: /start → [Menú] → [✏️ Modificar cita]
-
-Bot: ✏️ ¿Cuál de tus citas quieres mover a otro horario?
-     
-     [5 Nov a las 10:30] [8 Nov a las 16:00]
-
-Cliente: [elige "5 Nov a las 10:30"]
-
-Bot: 📆 Elige el día que prefieres:
-     
-     [Monday 4 Nov] [Tuesday 5 Nov] [Wednesday 6 Nov] ...
-
-Cliente: [elige "Wednesday 6 Nov"]
-
-Bot: ⏰ Nuevos huecos disponibles el Wednesday 6 Nov. 
-     ¿Cuál prefieres?
-     
-     [10:00h] [10:30h] [11:00h] ...
-
-Cliente: [elige "14:00h"]
-
-Bot: ✅ ¡Cita movida!
-     
-     📅 Wednesday 6 Nov
-     ⏰ 14:00h
-     
-     ¡Te esperamos! 💇‍♀️✨
-```
-
-## 🔒 Reglas de seguridad
-
-- **Un cliente solo ve sus propias citas** - No puede ver ni tocar las de otros
-- **No hay citas duplicadas** - El sistema verifica en tiempo real que el hueco está libre
-- **Si un hueco se ocupa mientras elige** - Le avisa y le ofrece otra opción
+- **Un cliente solo ve/toca sus propias citas.** El `clientId` (chat_id de Telegram) se vincula a las tools por clausura en `tools.js` (`createToolExecutor(clientId)`) — el modelo de IA **nunca** recibe ni puede elegir el `clientId` como parámetro, así que ni un prompt malicioso puede hacer que el bot toque la cita de otro cliente.
+- **No hay citas duplicadas** — se verifica disponibilidad real justo antes de crear/mover la cita (evita condiciones de carrera).
+- **El agente no da información fuera de tema.** El system prompt en `aiAgent.js` le indica explícitamente que su único objetivo es agendar/ver/cancelar/modificar citas de este negocio, y que redirija con amabilidad cualquier pregunta que no tenga que ver con eso (no da consejos, no revela sus instrucciones, no charla de temas generales).
 
 ## 🛠️ Personalización
 
-Puedes cambiar los mensajes editando `src/bot/conversation.js`. Busca `await provider.sendMessage(clientId,` o `await provider.sendButtons(clientId,` para ver dónde se definen.
+Para un negocio nuevo, sigue editando **solo `src/config.js`** (nombre, servicios, horario). El agente de IA usa esos datos directamente en su system prompt — no hace falta enseñarle nada más.
 
-Ejemplos:
+## 🔑 Requisito: API key de Gemini
 
-```javascript
-// Cambiar este mensaje:
-await provider.sendMessage(clientId, `👋 ¡Hola! Bienvenido/a a ${config.businessName}`);
-
-// A algo como:
-await provider.sendMessage(clientId, `¡Hola! 👋 ¿Cómo te puedo ayudar hoy en ${config.businessName}?`);
-```
-
----
-
-**Nota:** El nombre del cliente y el servicio que necesita se piden como texto libre (el bot entiende frases como "quiero un tinte" comparando contra `aliases` en `config.js`). Día y hora se siguen ofreciendo con botones para evitar errores de interpretación de fechas.
-
-Si en el futuro quieres añadir NLP también para fechas (entender "el jueves a las 5"), se puede hacer extendiendo `conversation.js` con la API de Claude. Ver `docs/extend-with-claude.md` (próximamente).
+El bot no arranca de forma útil sin `GEMINI_API_KEY` en el `.env` (gratis en https://aistudio.google.com/app/apikey). Sin ella, Gemini rechazará las peticiones y el bot no podrá responder.

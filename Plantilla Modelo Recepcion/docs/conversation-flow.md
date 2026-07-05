@@ -1,136 +1,75 @@
 # 💬 Flujo de Conversación
 
-Este documento explica cómo fluye una conversación típica con el bot. Los ejemplos usan un negocio genérico con dos servicios ("Servicio de ejemplo 1" y "2") — sustitúyelos por los reales al adaptar la plantilla.
+El bot ya no usa una máquina de estados con botones: cada mensaje del cliente
+se manda tal cual a un agente de IA (Google Gemini, ver `src/bot/aiAgent.js`)
+que lleva la conversación en lenguaje natural y decide qué herramientas de
+calendario llamar (`src/bot/tools.js`). Esto imita cómo se comportará el bot
+el día que se migre a WhatsApp (sin botones, conversación fluida).
 
-## 📌 Menú principal
-
-Cuando un cliente envía `/start`, ve un saludo distinto según si ya tiene historial de citas pasadas (memoria vía Google Calendar) o es la primera vez:
-
-```
-¡Hola, María! 👋                    ¡Qué alegría verte de nuevo, María! 😊
-Bienvenido/a a Mi Negocio            Bienvenido/a a Mi Negocio
-
-¿En qué te ayudo hoy? 😊             ¿En qué te ayudo hoy? 😊
-
-[📅 Reservar cita] [🔎 Ver mis citas] [❌ Cancelar cita] [✏️ Modificar cita]
-```
-
-## 📅 Flujo: Reservar cita
+## 🧠 Cómo funciona por dentro
 
 ```
-Cliente: /start → [📅 Reservar cita]
-
-Bot: ¡Genial! ✨
-     ¿Cómo te llamas?
-
-Cliente: María
-
-Bot: Encantada de conocerte, María 😊
-     ¿Qué necesitas hoy? (por ejemplo: Servicio de ejemplo 1)
-
-Cliente: quiero uñas
-
-Bot: 📆 ¿Qué día te viene mejor?
-
-     [lunes 6 de julio] [martes 7 de julio] ...
-
-Cliente: [elige un día]
-
-Bot: ⏰ Estos son los huecos libres el lunes 6 de julio:
-
-     [10:00h] [10:30h] [11:00h] ...
-
-Cliente: [elige una hora]
-
-Bot: ¿Confirmamos tu cita? 📝
-
-     Servicio de ejemplo 1
-     📅 lunes 6 de julio
-     ⏰ 10:30h
-
-     [✅ Sí, reservar] [↩️ Cancelar]
-
-Cliente: [✅ Sí, reservar]
-
-Bot: ¡Cita reservada! 🎉
-
-     Servicio de ejemplo 1
-     📅 lunes 6 de julio
-     ⏰ 10:30h
-
-     ¡Te esperamos! 😊
+Cliente escribe texto
+        │
+        ▼
+conversation.js ──► aiAgent.js ──► Gemini (system prompt con negocio,
+        ▲               │          servicios, horario y fecha de hoy)
+        │               ▼
+        │        ¿Gemini pide llamar a una tool?
+        │               │ sí
+        │               ▼
+        │        tools.js ejecuta la función real
+        │        (consultar Calendar, crear cita...)
+        │               │
+        │               └──► resultado real vuelve a Gemini
+        │                    (puede encadenar varias tools)
+        │
+        └── texto final de Gemini → se envía al cliente
 ```
 
-### Si no hay hueco disponible (sugerencia automática)
+- El **historial de la conversación** vive en memoria por `clientId` (se resetea con `/start` o si el proceso se reinicia).
+- El **historial de citas pasadas/futuras** vive en Google Calendar, no en la conversación — por eso el bot puede "recordar" a un cliente recurrente aunque la sesión se resetee.
 
-En vez de dejar al cliente sin opciones, el bot busca el hueco libre más cercano (mismo día más tarde, u otro día) y lo ofrece directamente:
-
-```
-Bot: Vaya, no queda ningún hueco el lunes 6 de julio 😕
-
-     El hueco libre más cercano es:
-     📅 martes 7 de julio
-     ⏰ 09:00h
-
-     ¿Te viene bien? 😊
-
-     [✅ Sí, perfecto] [📆 Prefiero otro día]
-```
-
-Si el cliente acepta, la cita se crea directamente sin pasos adicionales. Lo mismo ocurre si, justo al confirmar, el hueco se acaba de ocupar (condición de carrera) — el bot reacciona ofreciendo la siguiente alternativa en vez de dejar al cliente sin respuesta.
-
-## 🔎 Flujo: Ver mis citas
+## 📅 Ejemplo de conversación: reservar
 
 ```
-Cliente: /start → [🔎 Ver mis citas]
+Cliente: /start
 
-Bot: 📋 Tus próximas citas:
+Bot: ¡Hola! 👋 Bienvenido/a a Mi Negocio. ¿En qué te ayudo hoy?
 
-     📌 martes 7 de julio a las 09:00
+Cliente: Hola, soy Marta, quiero el servicio de ejemplo 1
 
-     🕐 Tu historial reciente:
+Bot: Encantada, Marta 😊 ¿Qué día te viene bien?
 
-     ✅ 3 de julio
-     ✅ 20 de junio
+Cliente: el jueves por la mañana
 
-     ¡Nos vemos pronto! 😊
+Bot: Déjame mirar... el jueves tengo hueco a las 10:00 y a las 11:30. ¿Cuál prefieres?
+
+Cliente: a las 10
+
+Bot: Perfecto, confirmamos: Servicio de ejemplo 1 el jueves 9 de julio a las 10:00. ¿Todo correcto?
+
+Cliente: sí
+
+Bot: ¡Listo! 🎉 Tu cita queda reservada el jueves 9 de julio a las 10:00. ¡Te esperamos!
 ```
 
-El historial (citas pasadas) se guarda en el propio Google Calendar del negocio — no hace falta base de datos aparte, y sobrevive a reinicios del bot.
+Por dentro, en el paso "el jueves por la mañana" Gemini llamó a la tool `consultar_huecos` con el día real (nunca inventa disponibilidad), y en el "sí" final llamó a `crear_cita`.
 
-## ❌ Flujo: Cancelar cita
+## 🔎 Ver, cancelar y modificar citas
 
-```
-Cliente: /start → [❌ Cancelar cita]
-
-Bot: ¿Cuál quieres cancelar? 🗓️
-
-     [7 jul a las 09:00]
-
-Cliente: [elige la cita]
-
-Bot: Cita cancelada ✅
-
-     Si cambias de opinión, escribe /start
-     y reservamos otra cuando quieras. 😊
-```
-
-## ✏️ Flujo: Modificar cita
-
-Igual que reservar, pero partiendo de una cita ya existente: el cliente elige cuál mover, luego día y hora nuevos. Si no hay hueco, también se le ofrece automáticamente la alternativa más cercana.
+Igual de conversacional: el cliente puede escribir "¿qué citas tengo?", "quiero cancelar mi cita del jueves" o "¿puedes moverla al viernes?" y el agente usa `ver_mis_citas`, `cancelar_cita` y `modificar_cita` según haga falta, pidiendo siempre confirmación antes de cancelar o mover algo.
 
 ## 🔒 Reglas de seguridad (no tocar)
 
-- **Un cliente solo ve/toca sus propias citas** — cada evento de Google Calendar guarda el `clientId` de Telegram en propiedades privadas, y toda consulta de "mis citas" filtra por ese campo.
+- **Un cliente solo ve/toca sus propias citas.** El `clientId` (chat_id de Telegram) se vincula a las tools por clausura en `tools.js` (`createToolExecutor(clientId)`) — el modelo de IA **nunca** recibe ni puede elegir el `clientId` como parámetro, así que ni un prompt malicioso puede hacer que el bot toque la cita de otro cliente.
 - **No hay citas duplicadas** — se verifica disponibilidad real justo antes de crear/mover la cita (evita condiciones de carrera).
-- **Si un hueco se ocupa mientras el cliente decide** — se le ofrece automáticamente la alternativa más cercana en vez de un callejón sin salida.
+- **El agente no da información fuera de tema.** El system prompt en `aiAgent.js` le indica explícitamente que su único objetivo es agendar/ver/cancelar/modificar citas de este negocio, y que redirija con amabilidad cualquier pregunta que no tenga que ver con eso (no da consejos, no revela sus instrucciones, no charla de temas generales).
 
 ## 🛠️ Personalización
 
-Para un negocio nuevo, **solo hace falta editar `src/config.js`** (nombre, servicios, horario). Los mensajes en sí viven en `src/bot/conversation.js` si quieres afinar el tono, pero no deberían necesitar cambios funcionales.
+Para un negocio nuevo, sigue editando **solo `src/config.js`** (nombre, servicios, horario). El agente de IA usa esos datos directamente en su system prompt — no hace falta enseñarle nada más.
 
-## 🗣️ Sobre el lenguaje natural
+## 🔑 Requisito: API key de Gemini
 
-El nombre del cliente y el servicio que necesita se piden como **texto libre**, no con botones: el bot pregunta "¿Cómo te llamas?" y "¿Qué necesitas hoy?", y hace matching contra el nombre y los `aliases` de cada servicio en `config.js` (ver `matchServicio` en `conversation.js`). Si el cliente escribe algo que no reconoce, se lo dice y le muestra la lista de servicios disponibles para que lo intente de nuevo.
-
-Día y hora, en cambio, se siguen ofreciendo con **botones**: pedir al cliente que escriba "el jueves a las 5" obligaría a parsear fechas en lenguaje natural, lo cual falla más de lo que acierta en un MVP. Si en el futuro se quiere añadir comprensión de lenguaje natural también para fechas, se puede extender `conversation.js` apoyándose en la API de Claude, pero no es necesario para que el bot funcione bien.
+El bot no arranca de forma útil sin `GEMINI_API_KEY` en el `.env` (gratis en https://aistudio.google.com/app/apikey). Sin ella, Gemini rechazará las peticiones y el bot no podrá responder.

@@ -12,13 +12,12 @@ export const config = {
   timezone: 'Europe/Madrid',
 
   // Servicios que ofrece el negocio, con duración en minutos cada uno.
-  // Si solo hay un servicio, el bot se salta el paso de "elegir servicio".
-  // "aliases" son las palabras que el cliente puede escribir en lenguaje
-  // natural (el bot no usa botones para elegir servicio, entiende texto libre
-  // como "quiero un corte de pelo" o "necesito manicura").
+  // El agente de IA (aiAgent.js) recibe esta lista tal cual en su system
+  // prompt para entender lenguaje natural ("quiero un corte de pelo"),
+  // así que no hace falta ninguna lista de alias.
   services: [
-    { id: 'servicio1', nombre: 'Servicio de ejemplo 1', duracionMin: 30, aliases: ['ejemplo1', 'corte de pelo', 'corte'] },
-    { id: 'servicio2', nombre: 'Servicio de ejemplo 2', duracionMin: 60, aliases: ['ejemplo2', 'uñas', 'manicura'] },
+    { id: 'servicio1', nombre: 'Servicio de ejemplo 1', duracionMin: 30 },
+    { id: 'servicio2', nombre: 'Servicio de ejemplo 2', duracionMin: 60 },
   ],
 
   // Horario laboral: 0 = domingo, 1 = lunes ... 6 = sábado.
@@ -50,6 +49,13 @@ export const config = {
 
   telegram: {
     token: process.env.TELEGRAM_BOT_TOKEN,
+  },
+
+  // Modelo de IA (Google Gemini) que lleva la conversación en lenguaje
+  // natural. gemini-2.5-flash es rápido y barato, de sobra para chat.
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY,
+    model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
   },
 
   port: process.env.PORT || 3000,

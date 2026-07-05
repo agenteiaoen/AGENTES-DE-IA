@@ -6,16 +6,16 @@ export const config = {
   businessName: 'ZubAL Estilistas ✨',
   timezone: 'Europe/Madrid',
 
-  // Servicios de peluquería con duración en minutos.
-  // "aliases" son las palabras que el cliente puede escribir en lenguaje
-  // natural (el bot ya no usa botones para elegir servicio, hace matching de texto libre).
+  // Servicios de peluquería con duración en minutos. El agente de IA (aiAgent.js)
+  // recibe esta lista tal cual en su system prompt para entender lenguaje
+  // natural ("quiero un tinte"), así que no hace falta ninguna lista de alias.
   services: [
-    { id: 'corte', nombre: '✂️ Corte de Cabello', duracionMin: 30, aliases: ['corte', 'cortar', 'pelo', 'corte de pelo'] },
-    { id: 'tinte', nombre: '🎨 Tinte', duracionMin: 60, aliases: ['tinte', 'teñir', 'color', 'tintar'] },
-    { id: 'peinado', nombre: '💇‍♀️ Peinado', duracionMin: 30, aliases: ['peinado', 'peinar'] },
-    { id: 'alisado', nombre: '🌊 Alisado/Ondulado', duracionMin: 90, aliases: ['alisado', 'alisar', 'ondulado', 'ondular', 'planchado'] },
-    { id: 'extension', nombre: '💆‍♀️ Extensiones', duracionMin: 120, aliases: ['extension', 'extensiones'] },
-    { id: 'tratamiento', nombre: '🧴 Tratamiento Capilar', duracionMin: 45, aliases: ['tratamiento', 'mascarilla', 'hidratacion', 'hidratación'] },
+    { id: 'corte', nombre: '✂️ Corte de Cabello', duracionMin: 30 },
+    { id: 'tinte', nombre: '🎨 Tinte', duracionMin: 60 },
+    { id: 'peinado', nombre: '💇‍♀️ Peinado', duracionMin: 30 },
+    { id: 'alisado', nombre: '🌊 Alisado/Ondulado', duracionMin: 90 },
+    { id: 'extension', nombre: '💆‍♀️ Extensiones', duracionMin: 120 },
+    { id: 'tratamiento', nombre: '🧴 Tratamiento Capilar', duracionMin: 45 },
   ],
 
   // Horario laboral: 0 = domingo, 1 = lunes, 6 = sábado
@@ -47,6 +47,13 @@ export const config = {
 
   telegram: {
     token: process.env.TELEGRAM_BOT_TOKEN,
+  },
+
+  // Modelo de IA (Google Gemini) que lleva la conversación en lenguaje
+  // natural. gemini-2.5-flash es rápido y barato, de sobra para chat.
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY,
+    model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
   },
 
   port: process.env.PORT || 3000,

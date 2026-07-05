@@ -9,12 +9,13 @@
     "dev": "node --watch src/index.js"
   },
   "dependencies": {
-    "telegraf": "^4.16.3",
-    "googleapis": "^140.0.1",
-    "dotenv": "^16.4.5",
+    "@google/generative-ai": "^0.24.1",
     "date-fns": "3.6.0",
     "date-fns-tz": "3.2.0",
-    "express": "^4.19.2"
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "googleapis": "^140.0.1",
+    "telegraf": "^4.16.3"
   },
   "engines": {
     "node": ">=18"
