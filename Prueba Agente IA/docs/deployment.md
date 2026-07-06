@@ -62,7 +62,7 @@ sudo apt-get install -y nodejs
 
 # Clona el repositorio
 git clone tu_repositorio
-cd zubal-recepcionista
+cd "Prueba Agente IA"
 
 # Instala dependencias
 npm install
@@ -75,7 +75,7 @@ nano .env
 sudo npm install -g pm2
 
 # Arranca el bot
-pm2 start src/index.js --name "zubal-recepcionista"
+pm2 start src/index.js --name "prueba-agente-ia"
 pm2 startup
 pm2 save
 
@@ -123,8 +123,8 @@ CMD ["npm", "start"]
 
 Build y run:
 ```bash
-docker build -t zubal-recepcionista .
-docker run -e TELEGRAM_BOT_TOKEN=... -e GOOGLE_CLIENT_EMAIL=... zubal-recepcionista
+docker build -t prueba-agente-ia .
+docker run -e TELEGRAM_BOT_TOKEN=... -e GOOGLE_CLIENT_EMAIL=... prueba-agente-ia
 ```
 
 ## 📋 Checklist antes de deployar
@@ -164,10 +164,10 @@ Después de deployar:
 - En Railway/Render: `git push` automático
 - En VPS:
   ```bash
-  cd zubal-recepcionista
+  cd "Prueba Agente IA"
   git pull
   npm install
-  pm2 restart zubal-recepcionista
+  pm2 restart prueba-agente-ia
   ```
 
 ---

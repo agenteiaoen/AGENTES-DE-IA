@@ -19,7 +19,7 @@
 ### 1. Clonar/descargar este proyecto
 
 ```bash
-cd C:\Users\oscar\OneDrive\Desktop\Agente IA - Recepcionista\zubal-recepcionista
+cd "C:\Users\oscar\OneDrive\Desktop\Agente IA - Recepcionista\Prueba Agente IA"
 ```
 
 ### 2. Instalar dependencias
@@ -76,7 +76,7 @@ npm run dev
 ## 📁 Estructura del proyecto
 
 ```
-zubal-recepcionista/
+Prueba Agente IA/
 ├── package.json          # Dependencias
 ├── .env.example          # Template de variables de entorno
 ├── .gitignore

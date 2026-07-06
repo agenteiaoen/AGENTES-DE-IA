@@ -21,15 +21,15 @@ AgendeX necesita acceso a Google Calendar de ZubAL Estilistas para leer disponib
 1. Ve a **"APIs y servicios"** → **"Credenciales"**
 2. Haz clic en **"Crear credenciales"** → **"Cuenta de servicio"**
 3. Rellena:
-   - Nombre: "zubal-recepcionista"
-   - ID: "zubal-recepcionista" (se rellena solo)
+   - Nombre: "AgendeX ZubAL"
+   - ID: "agendex-zubal" (se rellena solo)
 4. Continúa sin rellenar más cosas (no necesita permisos especiales aquí)
 5. Haz clic en **"Crear y continuar"** → **"Continuar"** (dos veces)
 
 ## Paso 4: Generar las claves
 
 1. De vuelta en **"Credenciales"**, busca la cuenta de servicio que acabas de crear
-2. Haz clic en el **email** de la cuenta (algo como `zubal-recepcionista@tu-proyecto.iam.gserviceaccount.com`)
+2. Haz clic en el **email** de la cuenta (algo como `agendex-zubal@tu-proyecto.iam.gserviceaccount.com`)
 3. Ve a la pestaña **"Claves"**
 4. Haz clic en **"Añadir clave"** → **"Crear clave nueva"**
 5. Elige **"JSON"** y descargalo
@@ -66,7 +66,7 @@ En Google Calendar:
 Ahora tienes todo. Abre `.env` y rellena:
 
 ```env
-GOOGLE_CLIENT_EMAIL=zubal-recepcionista@tu-proyecto.iam.gserviceaccount.com
+GOOGLE_CLIENT_EMAIL=agendex-zubal@tu-proyecto.iam.gserviceaccount.com
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nXXXXX\n-----END PRIVATE KEY-----\n"
 GOOGLE_CALENDAR_ID=xxxx@group.calendar.google.com
 ```

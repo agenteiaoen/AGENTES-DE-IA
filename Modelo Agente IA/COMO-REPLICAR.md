@@ -4,7 +4,7 @@ Guía paso a paso para convertir esta plantilla en el recepcionista virtual de u
 
 ## Paso 1: Copiar la carpeta
 
-Duplica toda la carpeta `Agente Modelo Recepcion` y ponle un nombre sin espacios ni acentos, en minúsculas, describiendo el negocio:
+Duplica toda la carpeta `Modelo Agente IA` y ponle un nombre sin espacios ni acentos, en minúsculas, describiendo el negocio:
 
 ```
 mi-negocio-bot/

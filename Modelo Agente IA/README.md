@@ -1,8 +1,8 @@
-# 🤖 Agente Modelo Recepción
+# 🤖 Modelo Agente IA
 
 Plantilla base para crear recepcionistas virtuales por Telegram (con Google Calendar) para **cualquier negocio que funcione con citas**: peluquerías, clínicas, talleres, consultorías, academias, etc.
 
-No es un bot para un negocio concreto — es el **punto de partida** que se copia y adapta cada vez que hay que montar uno nuevo. El de ZubAL Estilistas (`../zubal-recepcionista`) nació de esta misma plantilla.
+No es un bot para un negocio concreto — es el **punto de partida** que se copia y adapta cada vez que hay que montar uno nuevo para un cliente. El de ZubAL Estilistas (`../Prueba Agente IA`) nació de esta misma plantilla.
 
 ## ✨ Qué hace (sin tocar nada)
 

@@ -1,5 +1,5 @@
 {
-  "name": "agente-modelo-recepcion",
+  "name": "modelo-agente-ia",
   "version": "1.0.0",
   "description": "Plantilla base de recepcionista virtual por Telegram con Google Calendar. Copiar y adaptar config.js para cada negocio nuevo.",
   "type": "module",
