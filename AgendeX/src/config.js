@@ -5,30 +5,35 @@ import 'dotenv/config';
 // A UN NEGOCIO NUEVO. No toques conversation.js ni googleCalendar.js.
 // ============================================================
 export const config = {
-  // Nombre del negocio/asistente tal como lo verá el cliente en los mensajes.
-  businessName: 'AgendeX',
+  // Nombre del negocio tal como lo verá el cliente en los mensajes.
+  // El asistente se llama AgendeX, pero el negocio real que atiende es ZubAL Estilistas (Zaragoza).
+  businessName: 'ZubAL Estilistas ✨',
 
   // Zona horaria del negocio (formato IANA, ej. Europe/Madrid, America/Mexico_City).
   timezone: 'Europe/Madrid',
 
-  // Servicios que ofrece el negocio, con duración en minutos cada uno.
-  // El agente de IA (aiAgent.js) recibe esta lista tal cual en su system
-  // prompt para entender lenguaje natural ("quiero un corte de pelo"),
-  // así que no hace falta ninguna lista de alias.
+  // Servicios de peluquería con duración en minutos. El agente de IA
+  // (aiAgent.js) recibe esta lista tal cual en su system prompt para
+  // entender lenguaje natural ("quiero un tinte"), así que no hace falta
+  // ninguna lista de alias.
   services: [
-    { id: 'servicio1', nombre: 'Servicio de ejemplo 1', duracionMin: 30 },
-    { id: 'servicio2', nombre: 'Servicio de ejemplo 2', duracionMin: 60 },
+    { id: 'corte', nombre: '✂️ Corte de Cabello', duracionMin: 30 },
+    { id: 'tinte', nombre: '🎨 Tinte', duracionMin: 60 },
+    { id: 'peinado', nombre: '💇‍♀️ Peinado', duracionMin: 30 },
+    { id: 'alisado', nombre: '🌊 Alisado/Ondulado', duracionMin: 90 },
+    { id: 'extension', nombre: '💆‍♀️ Extensiones', duracionMin: 120 },
+    { id: 'tratamiento', nombre: '🧴 Tratamiento Capilar', duracionMin: 45 },
   ],
 
-  // Horario laboral: 0 = domingo, 1 = lunes ... 6 = sábado.
-  // Formato: [[horaInicio, horaFin], [horaInicio, horaFin]] para huecos partidos.
+  // Horario laboral real de ZubAL Estilistas: lunes a viernes 10-20, sábado 10-14.
+  // 0 = domingo, 1 = lunes ... 6 = sábado.
   businessHours: {
-    1: [[9, 14], [16, 20]], // lunes
-    2: [[9, 14], [16, 20]], // martes
-    3: [[9, 14], [16, 20]], // miércoles
-    4: [[9, 14], [16, 20]], // jueves
-    5: [[9, 14], [16, 20]], // viernes
-    6: [[10, 14]],          // sábado
+    1: [[10, 20]], // lunes
+    2: [[10, 20]], // martes
+    3: [[10, 20]], // miércoles
+    4: [[10, 20]], // jueves
+    5: [[10, 20]], // viernes
+    6: [[10, 14]], // sábado
     // 0 (domingo) no aparece => cerrado
   },
 
