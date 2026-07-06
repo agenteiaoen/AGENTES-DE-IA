@@ -502,32 +502,6 @@ h1 {
   font-weight: 700;
 }
 
-/* FAQ */
-.faq-list { display: flex; flex-direction: column; gap: 12px; }
-.faq-item {
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
-  padding: 18px 22px;
-}
-.faq-item summary {
-  cursor: pointer;
-  font-weight: 700;
-  list-style: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.faq-item summary::-webkit-details-marker { display: none; }
-.faq-item summary::after {
-  content: "+";
-  font-size: 1.3rem;
-  color: var(--primary-2);
-  margin-left: 12px;
-}
-.faq-item[open] summary::after { content: "−"; }
-.faq-item p { color: var(--text-dim); margin-top: 12px; font-size: 0.95rem; }
-
 /* CTA FINAL */
 .cta-final { text-align: center; }
 .cta-inner { max-width: 620px; margin: 0 auto; }
