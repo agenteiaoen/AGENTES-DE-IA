@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { Telegraf, Markup } from 'telegraf';
 import { config } from '../config.js';
 
@@ -8,6 +9,31 @@ import { config } from '../config.js';
 function nombreReal(from) {
   const nombre = [from.first_name, from.last_name].filter(Boolean).join(' ').trim();
   return nombre || from.username || 'Cliente';
+}
+
+/**
+ * Normaliza un teléfono a un formato consistente (solo dígitos, con el "+"
+ * inicial si lo tenía) — evita que el mismo número quede guardado de formas
+ * distintas según cómo lo comparta cada cliente.
+ */
+function normalizarTelefono(telefono) {
+  if (!telefono) return telefono;
+  const limpio = String(telefono).trim().replace(/[^\d+]/g, '');
+  return limpio.startsWith('+') ? limpio : `+${limpio}`;
+}
+
+/**
+ * Secreto que Telegram debe mandar en la cabecera
+ * "X-Telegram-Bot-Api-Secret-Token" en cada petición al webhook — así
+ * comprobamos que las peticiones vienen realmente de Telegram y no de
+ * alguien que haya adivinado o filtrado la URL del webhook (que ya incluye
+ * el token, pero esto añade una capa extra sin coste). Se puede fijar uno
+ * propio con TELEGRAM_WEBHOOK_SECRET; si no, se deriva del propio token del
+ * bot (ya es un secreto, así que sigue siendo seguro).
+ */
+function obtenerSecretoWebhook() {
+  if (process.env.TELEGRAM_WEBHOOK_SECRET) return process.env.TELEGRAM_WEBHOOK_SECRET;
+  return createHash('sha256').update(config.telegram.token).digest('hex').slice(0, 32);
 }
 
 /**
@@ -65,7 +91,7 @@ export function createTelegramProvider(onMessage) {
           // Solo aceptamos el contacto si lo comparte el propio remitente,
           // nunca un contacto de otra persona reenviado.
           if (ctx.message.contact.user_id === ctx.from.id) {
-            telefonoPorCliente.set(clientId, ctx.message.contact.phone_number);
+            telefonoPorCliente.set(clientId, normalizarTelefono(ctx.message.contact.phone_number));
             await ctx.reply('¡Gracias! 📱 Ya lo tengo guardado.', Markup.removeKeyboard()).catch(() => {});
           }
         } catch (err) {
@@ -83,8 +109,9 @@ export function createTelegramProvider(onMessage) {
       // duermen el servidor tras inactividad. En local usamos long polling.
       if (config.publicUrl && app) {
         const webhookPath = `/telegraf/${config.telegram.token}`;
-        await bot.telegram.setWebhook(`${config.publicUrl}${webhookPath}`);
-        app.use(bot.webhookCallback(webhookPath));
+        const secretoWebhook = obtenerSecretoWebhook();
+        await bot.telegram.setWebhook(`${config.publicUrl}${webhookPath}`, { secret_token: secretoWebhook });
+        app.use(bot.webhookCallback(webhookPath, { secretToken: secretoWebhook }));
         console.log(`🤖 Bot de Telegram en marcha (webhook: ${config.publicUrl}${webhookPath})`);
       } else {
         await bot.telegram.deleteWebhook().catch(() => {});

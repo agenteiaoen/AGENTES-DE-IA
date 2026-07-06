@@ -12,6 +12,26 @@ const auth = new google.auth.JWT(
 
 const calendar = google.calendar({ version: 'v3', auth });
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Reintenta una llamada a la API de Google Calendar si falla por un error
+ * transitorio (sobrecarga puntual, rate limit) — evita que un turno entero
+ * de conversación se caiga por un 429/5xx pasajero de Google.
+ */
+async function conReintento(llamada, intentos = 2) {
+  for (let intento = 1; intento <= intentos; intento++) {
+    try {
+      return await llamada();
+    } catch (err) {
+      const status = err.code || err.response?.status;
+      const esTransitorio = status === 429 || (typeof status === 'number' && status >= 500);
+      if (!esTransitorio || intento === intentos) throw err;
+      await sleep(600 * intento);
+    }
+  }
+}
+
 /**
  * Devuelve los próximos N días hábiles según el horario laboral.
  * Solo se incluyen días donde el negocio está abierto.
@@ -59,13 +79,15 @@ export async function getFreeSlots(date, durationMin) {
   const dayStartUtc = fromZonedTime(`${dayStr} 00:00:00`, config.timezone);
   const dayEndUtc = fromZonedTime(`${dayStr} 23:59:59`, config.timezone);
 
-  const fbRes = await calendar.freebusy.query({
-    requestBody: {
-      timeMin: dayStartUtc.toISOString(),
-      timeMax: dayEndUtc.toISOString(),
-      items: [{ id: config.google.calendarId }],
-    },
-  });
+  const fbRes = await conReintento(() =>
+    calendar.freebusy.query({
+      requestBody: {
+        timeMin: dayStartUtc.toISOString(),
+        timeMax: dayEndUtc.toISOString(),
+        items: [{ id: config.google.calendarId }],
+      },
+    })
+  );
   const busy = fbRes.data.calendars[config.google.calendarId].busy || [];
 
   const free = futureCandidates.filter((c) => {
@@ -105,13 +127,15 @@ export async function findNextAvailableSlot(fromDate, durationMin, maxDays = 30)
  * Comprobación final justo antes de crear la cita para evitar condiciones de carrera.
  */
 export async function isSlotStillFree(start, end) {
-  const fbRes = await calendar.freebusy.query({
-    requestBody: {
-      timeMin: start.toISOString(),
-      timeMax: end.toISOString(),
-      items: [{ id: config.google.calendarId }],
-    },
-  });
+  const fbRes = await conReintento(() =>
+    calendar.freebusy.query({
+      requestBody: {
+        timeMin: start.toISOString(),
+        timeMax: end.toISOString(),
+        items: [{ id: config.google.calendarId }],
+      },
+    })
+  );
   const busy = fbRes.data.calendars[config.google.calendarId].busy || [];
   return busy.length === 0;
 }
@@ -128,22 +152,24 @@ export async function createAppointment({ clientId, clientLabel, clientPhone, se
     return { ok: false, reason: 'slot_taken' };
   }
   const lineaTelefono = clientPhone ? `\nTeléfono: ${clientPhone}` : '';
-  const res = await calendar.events.insert({
-    calendarId: config.google.calendarId,
-    requestBody: {
-      summary: `${serviceName} — ${clientLabel || clientId}`,
-      description: `Cita reservada automáticamente por ${config.businessName}\nCliente: ${clientLabel || clientId}\nServicio: ${serviceName}${lineaTelefono}`,
-      start: { dateTime: start.toISOString(), timeZone: config.timezone },
-      end: { dateTime: end.toISOString(), timeZone: config.timezone },
-      extendedProperties: {
-        private: {
-          clientId: String(clientId),
-          clientLabel: clientLabel || '',
-          clientPhone: clientPhone || '',
+  const res = await conReintento(() =>
+    calendar.events.insert({
+      calendarId: config.google.calendarId,
+      requestBody: {
+        summary: `${serviceName} — ${clientLabel || clientId}`,
+        description: `Cita reservada automáticamente por ${config.businessName}\nCliente: ${clientLabel || clientId}\nServicio: ${serviceName}${lineaTelefono}`,
+        start: { dateTime: start.toISOString(), timeZone: config.timezone },
+        end: { dateTime: end.toISOString(), timeZone: config.timezone },
+        extendedProperties: {
+          private: {
+            clientId: String(clientId),
+            clientLabel: clientLabel || '',
+            clientPhone: clientPhone || '',
+          },
         },
       },
-    },
-  });
+    })
+  );
   return { ok: true, event: res.data };
 }
 
@@ -151,13 +177,15 @@ export async function createAppointment({ clientId, clientLabel, clientPhone, se
  * Lista SOLO las citas futuras del cliente. Esta es la función clave de seguridad.
  */
 export async function listMyAppointments(clientId) {
-  const res = await calendar.events.list({
-    calendarId: config.google.calendarId,
-    timeMin: new Date().toISOString(),
-    privateExtendedProperty: `clientId=${clientId}`,
-    singleEvents: true,
-    orderBy: 'startTime',
-  });
+  const res = await conReintento(() =>
+    calendar.events.list({
+      calendarId: config.google.calendarId,
+      timeMin: new Date().toISOString(),
+      privateExtendedProperty: `clientId=${clientId}`,
+      singleEvents: true,
+      orderBy: 'startTime',
+    })
+  );
   return res.data.items || [];
 }
 
@@ -170,14 +198,16 @@ export async function listAppointmentHistory(clientId, maxResults = 5) {
   const unAnioAtras = new Date();
   unAnioAtras.setFullYear(unAnioAtras.getFullYear() - 1);
 
-  const res = await calendar.events.list({
-    calendarId: config.google.calendarId,
-    timeMin: unAnioAtras.toISOString(),
-    timeMax: new Date().toISOString(),
-    privateExtendedProperty: `clientId=${clientId}`,
-    singleEvents: true,
-    orderBy: 'startTime',
-  });
+  const res = await conReintento(() =>
+    calendar.events.list({
+      calendarId: config.google.calendarId,
+      timeMin: unAnioAtras.toISOString(),
+      timeMax: new Date().toISOString(),
+      privateExtendedProperty: `clientId=${clientId}`,
+      singleEvents: true,
+      orderBy: 'startTime',
+    })
+  );
   const items = res.data.items || [];
   return items.slice(-maxResults).reverse();
 }
@@ -186,11 +216,11 @@ export async function listAppointmentHistory(clientId, maxResults = 5) {
  * Cancela una cita, pero SOLO si el clientId coincide. Seguridad crítica.
  */
 export async function cancelAppointment(clientId, eventId) {
-  const event = await calendar.events.get({ calendarId: config.google.calendarId, eventId });
+  const event = await conReintento(() => calendar.events.get({ calendarId: config.google.calendarId, eventId }));
   if (event.data.extendedProperties?.private?.clientId !== String(clientId)) {
     return { ok: false, reason: 'not_owner' };
   }
-  await calendar.events.delete({ calendarId: config.google.calendarId, eventId });
+  await conReintento(() => calendar.events.delete({ calendarId: config.google.calendarId, eventId }));
   return { ok: true };
 }
 
@@ -198,7 +228,7 @@ export async function cancelAppointment(clientId, eventId) {
  * Modifica (mueve) una cita a un nuevo horario, verificando propiedad y disponibilidad.
  */
 export async function rescheduleAppointment(clientId, eventId, newStart, newEnd) {
-  const event = await calendar.events.get({ calendarId: config.google.calendarId, eventId });
+  const event = await conReintento(() => calendar.events.get({ calendarId: config.google.calendarId, eventId }));
   if (event.data.extendedProperties?.private?.clientId !== String(clientId)) {
     return { ok: false, reason: 'not_owner' };
   }
@@ -206,13 +236,15 @@ export async function rescheduleAppointment(clientId, eventId, newStart, newEnd)
   if (!stillFree) {
     return { ok: false, reason: 'slot_taken' };
   }
-  const res = await calendar.events.patch({
-    calendarId: config.google.calendarId,
-    eventId,
-    requestBody: {
-      start: { dateTime: newStart.toISOString(), timeZone: config.timezone },
-      end: { dateTime: newEnd.toISOString(), timeZone: config.timezone },
-    },
-  });
+  const res = await conReintento(() =>
+    calendar.events.patch({
+      calendarId: config.google.calendarId,
+      eventId,
+      requestBody: {
+        start: { dateTime: newStart.toISOString(), timeZone: config.timezone },
+        end: { dateTime: newEnd.toISOString(), timeZone: config.timezone },
+      },
+    })
+  );
   return { ok: true, event: res.data };
 }

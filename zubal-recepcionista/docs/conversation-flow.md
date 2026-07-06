@@ -85,3 +85,10 @@ El bot no arranca de forma útil sin `GROQ_API_KEY` en el `.env` (gratis, sin ta
 ## 🛡️ Anti-flood
 
 Antes de llamar a la IA, `aiAgent.js` comprueba si el cliente está mandando mensajes en ráfaga (más de 6 en 20 segundos) o repitiendo literalmente el mismo mensaje 3 veces seguidas. Si es así, responde con un mensaje fijo pidiendo servicio, día/hora y nombre — sin gastar ninguna petición a la IA. Protege la cuota gratuita compartida (30 peticiones/minuto entre todos los clientes) de un intento de saturarla.
+
+## 🧱 Otras protecciones de robustez
+
+- **Webhook verificado** (`telegramProvider.js`): Telegram debe mandar un secreto en la cabecera `X-Telegram-Bot-Api-Secret-Token` en cada petición al webhook, o se rechaza. El secreto se deriva automáticamente del `TELEGRAM_BOT_TOKEN` (o se puede fijar uno propio con `TELEGRAM_WEBHOOK_SECRET`). Esto es específico de esta capa de demo en Telegram — el equivalente en el proveedor de WhatsApp será la verificación de firma que exige Meta.
+- **Reintentos en Google Calendar** (`googleCalendar.js`, función `conReintento`): si una llamada a la API falla por un error transitorio (429 o 5xx), se reintenta una vez tras una pequeña espera antes de dar el turno por fallido.
+- **Validación de fechas en las tools** (`tools.js`): si el modelo manda una fecha/hora mal formada a `crear_cita` o `modificar_cita`, se detecta antes de tocar el calendario (`error: 'fecha_invalida'`) en vez de crear una cita con una fecha inválida.
+- **Normalización del teléfono** (`telegramProvider.js`, función `normalizarTelefono`): el número que comparte el cliente se limpia a un formato consistente (solo dígitos y el `+` inicial) antes de guardarlo, para que no queden formatos distintos según cómo lo escriba cada persona.

@@ -150,6 +150,7 @@ export function createToolExecutor(clientId, clientPhone) {
           return { error: 'limite_citas_alcanzado', maximo: config.maxCitasPorCliente };
         }
         const start = new Date(args.fechaHoraInicioISO);
+        if (Number.isNaN(start.getTime())) return { error: 'fecha_invalida' };
         const end = new Date(start.getTime() + servicio.duracionMin * 60000);
         const result = await createAppointment({
           clientId,
@@ -182,6 +183,7 @@ export function createToolExecutor(clientId, clientPhone) {
         if (!cita) return { movida: false, motivo: 'not_owner' };
         const durationMin = (new Date(cita.end.dateTime) - new Date(cita.start.dateTime)) / 60000;
         const newStart = new Date(args.fechaHoraInicioISO);
+        if (Number.isNaN(newStart.getTime())) return { error: 'fecha_invalida' };
         const newEnd = new Date(newStart.getTime() + durationMin * 60000);
         const result = await rescheduleAppointment(clientId, args.citaId, newStart, newEnd);
         return { movida: result.ok, motivo: result.reason };
