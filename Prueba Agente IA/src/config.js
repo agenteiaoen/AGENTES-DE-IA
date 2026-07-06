@@ -50,10 +50,11 @@ export const config = {
   },
 
   // Modelo de IA (Claude, por Anthropic) que lleva la conversación en
-  // lenguaje natural. API de pago, pero muy flexible en capacidad y contexto.
+  // lenguaje natural. Haiku: rápido y barato, de sobra para un flujo
+  // estructurado de agendar/consultar/cancelar citas con llamadas a herramientas.
   claude: {
     apiKey: process.env.ANTHROPIC_API_KEY,
-    model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
+    model: process.env.CLAUDE_MODEL || 'claude-haiku-4-5',
   },
 
   port: process.env.PORT || 3000,
