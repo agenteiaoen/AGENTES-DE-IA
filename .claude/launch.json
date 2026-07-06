@@ -4,7 +4,7 @@
     {
       "name": "landing-page",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "4173", "--directory", "landing-page"],
+      "runtimeArgs": ["-m", "http.server", "4173", "--directory", "Landing Page"],
       "port": 4173
     }
   ]
