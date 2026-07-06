@@ -65,7 +65,8 @@ export const config = {
   anthropic: {
     apiKey: process.env.ANTHROPIC_API_KEY,
     model: process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001',
-    maxTokens: Number(process.env.ANTHROPIC_MAX_TOKENS || 512),
+    // Tope bajo a propósito: respuestas cortas y directas gastan menos y llegan antes al cliente.
+    maxTokens: Number(process.env.ANTHROPIC_MAX_TOKENS || 220),
   },
 
   port: process.env.PORT || 3000,
