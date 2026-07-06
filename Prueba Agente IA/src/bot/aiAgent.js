@@ -1,10 +1,10 @@
-import Groq from 'groq-sdk';
+import Anthropic from '@anthropic-ai/sdk';
 import { toZonedTime } from 'date-fns-tz';
 import { config } from '../config.js';
 import { toolDeclarations, createToolExecutor } from './tools.js';
 import { listAppointmentHistory } from '../calendar/googleCalendar.js';
 
-const groq = new Groq({ apiKey: config.groq.apiKey });
+const anthropic = new Anthropic({ apiKey: config.claude.apiKey });
 
 const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const MESES = [
@@ -143,12 +143,17 @@ function esFloodOSpam(clientId, texto) {
 const RESPUESTA_FLOOD =
   'Para poder ayudarte necesito lo básico 😊 Dime qué servicio quieres, para qué día y hora te viene bien, y tu nombre — y seguimos con la cita.';
 
-// Groq usa el formato de function calling de OpenAI: {type:'function', function:{...}}.
+// Claude (Anthropic) usa su propio formato de tools: {name, description, input_schema}.
 // tools.js define las herramientas en formato genérico {name, description, parameters};
-// aquí las envolvemos una sola vez.
-const herramientasGroq = toolDeclarations.map((t) => ({
-  type: 'function',
-  function: { name: t.name, description: t.description, parameters: t.parameters },
+// aquí las transformamos al formato que espera Anthropic.
+const herramientasClaude = toolDeclarations.map((t) => ({
+  name: t.name,
+  description: t.description,
+  input_schema: {
+    type: 'object',
+    properties: t.parameters.properties,
+    required: t.parameters.required,
+  },
 }));
 
 // Sesiones de conversación en memoria por cliente (historial de turnos, sin el system prompt).
@@ -193,31 +198,26 @@ export async function handleTurn(clientId, clientLabel, userText, clientPhone) {
   const executeTool = createToolExecutor(clientId, clientPhone);
   const messages = [{ role: 'system', content: system }, ...session.history, { role: 'user', content: userText }];
 
-  // Los 503/429 de Groq suelen ser transitorios (servidor con mucha carga) —
-  // reintentamos una vez antes de rendirnos. También reintentamos si el
-  // modelo genera una llamada a función mal formada ("tool_use_failed"):
-  // es un fallo esporádico del propio modelo, no del prompt, y casi siempre
-  // se resuelve solo en el segundo intento. Si no reintentáramos, ese turno
-  // se perdía sin guardarse en el historial y la conversación "olvidaba" lo
-  // que el cliente acababa de decir (día, hora, servicio), dando la sensación
-  // de que el bot cambiaba de opinión sin motivo.
+  // Claude es muy robusto con tool_use, así que reintentamos solo en caso de
+  // errores transitorios (rate limits, timeouts, etc.).
   async function crearCompletionConReintento() {
     try {
-      return await groq.chat.completions.create({
-        model: config.groq.model,
+      return await anthropic.messages.create({
+        model: config.claude.model,
         max_tokens: 1024,
-        messages,
-        tools: herramientasGroq,
+        system: messages[0].content,
+        messages: messages.slice(1),
+        tools: herramientasClaude,
       });
     } catch (err) {
-      const esToolUseFallido = err.status === 400 && err.error?.error?.code === 'tool_use_failed';
-      if (err.status === 503 || esToolUseFallido) {
-        await sleep(esToolUseFallido ? 400 : 1500);
-        return groq.chat.completions.create({
-          model: config.groq.model,
+      if (err.status === 429 || err.status === 503) {
+        await sleep(1500);
+        return anthropic.messages.create({
+          model: config.claude.model,
           max_tokens: 1024,
-          messages,
-          tools: herramientasGroq,
+          system: messages[0].content,
+          messages: messages.slice(1),
+          tools: herramientasClaude,
         });
       }
       throw err;
@@ -225,39 +225,47 @@ export async function handleTurn(clientId, clientLabel, userText, clientPhone) {
   }
 
   try {
-    let completion = await crearCompletionConReintento();
-    let choice = completion.choices[0];
+    let response = await crearCompletionConReintento();
 
     // Encadena llamadas a herramientas hasta que el modelo dé una respuesta final.
     let vueltas = 0;
-    while (choice.finish_reason === 'tool_calls' && vueltas < 5) {
-      messages.push(choice.message);
+    while (response.stop_reason === 'tool_use' && vueltas < 5) {
+      // Agrega el mensaje del asistente (con todas sus partes: texto + tool_use) al historial.
+      messages.push({ role: 'assistant', content: response.content });
 
-      const toolCalls = choice.message.tool_calls || [];
+      // Extrae los tool_use del response.
+      const toolUses = response.content.filter((c) => c.type === 'tool_use');
       const toolResults = await Promise.all(
-        toolCalls.map(async (tc) => ({
-          role: 'tool',
-          tool_call_id: tc.id,
-          content: JSON.stringify(await executeTool(tc.function.name, JSON.parse(tc.function.arguments || '{}'))),
+        toolUses.map(async (tu) => ({
+          type: 'tool_result',
+          tool_use_id: tu.id,
+          content: JSON.stringify(await executeTool(tu.name, tu.input)),
         }))
       );
-      messages.push(...toolResults);
 
-      completion = await crearCompletionConReintento();
-      choice = completion.choices[0];
+      // Agrega los resultados como un mensaje del usuario.
+      messages.push({ role: 'user', content: toolResults });
+
+      response = await crearCompletionConReintento();
       vueltas += 1;
     }
 
-    messages.push(choice.message);
-    session.history = messages.slice(1); // quitamos el system prompt, se reconstruye cada turno
-    return (choice.message.content || '').trim() || 'Perdona, ¿me lo repites? 😅';
+    // Agrega el mensaje final del asistente al historial.
+    messages.push({ role: 'assistant', content: response.content });
+
+    // Guarda el historial sin el system prompt (se reconstruye cada turno).
+    session.history = messages.slice(1);
+
+    // Extrae el texto de la respuesta (puede haber múltiples bloques, pero usamos el primero de tipo text).
+    const textContent = response.content.find((c) => c.type === 'text');
+    return (textContent?.text || '').trim() || 'Perdona, ¿me lo repites? 😅';
   } catch (err) {
     // No dejamos que un fallo de la IA (límite de peticiones, timeout, etc.)
     // tumbe la conversación con un error genérico — respondemos algo útil y
     // NO guardamos este turno en el historial, para que el cliente pueda
     // repetir su mensaje sin que quede "colgado" a medias.
     if (err.status === 429) {
-      console.error('Límite de peticiones de Groq:', err.message);
+      console.error('Límite de peticiones de Claude:', err.message);
       return 'Estoy recibiendo muchos mensajes ahora mismo 🙏 Dame unos segundos y vuelve a escribirme, por favor.';
     }
     console.error('Error del agente de IA:', err);

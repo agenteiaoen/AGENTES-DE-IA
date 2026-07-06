@@ -49,14 +49,11 @@ export const config = {
     token: process.env.TELEGRAM_BOT_TOKEN,
   },
 
-  // Modelo de IA (Groq, que aloja modelos Llama de Meta) que lleva la
-  // conversación en lenguaje natural. Nivel gratuito de Groq: 14.400
-  // peticiones/día y 30/minuto — de sobra para el volumen real de un
-  // negocio, sin el límite tan bajo (20/día) que tenía el nivel gratuito
-  // de Gemini para este proyecto.
-  groq: {
-    apiKey: process.env.GROQ_API_KEY,
-    model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+  // Modelo de IA (Claude, por Anthropic) que lleva la conversación en
+  // lenguaje natural. API de pago, pero muy flexible en capacidad y contexto.
+  claude: {
+    apiKey: process.env.ANTHROPIC_API_KEY,
+    model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
   },
 
   port: process.env.PORT || 3000,
