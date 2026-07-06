@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgendeX — Tu recepcionista virtual con IA</title>
+<meta name="description" content="Recepcionista virtual con IA para negocios: agenda, cancela y modifica citas 24/7 por WhatsApp, conectado a tu Google Calendar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bg-glow"><div class="bg-grid"></div></div>
+
+<header class="navbar" id="navbar">
+  <div class="container navbar-inner">
+    <a href="#top" class="brand">
+      <span class="brand-dot"></span>
+      AgendeX
+    </a>
+    <nav class="nav-links">
+      <a href="#como-funciona" class="dock-item">Cómo funciona</a>
+      <a href="#caracteristicas" class="dock-item">Características</a>
+      <a href="#planes" class="dock-item">Planes</a>
+      <a href="#faq" class="dock-item">FAQ</a>
+    </nav>
+    <a href="#contacto" class="btn btn-primary btn-sm">Solicitar demo</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="badge fade-up">🤖 Recepcionista con IA · 24/7 · Sin errores de agenda</div>
+      <h1 class="fade-up delay-1">
+        Tu negocio no perderá<br><span class="text-gradient">un cliente</span>
+      </h1>
+      <p class="hero-sub fade-up delay-2">
+        Un asistente de IA que atiende por WhatsApp y anota las citas<br>SIN LLAMADAS
+      </p>
+      <div class="hero-cta fade-up delay-3">
+        <a href="#contacto" class="btn btn-primary btn-lg">Quiero mi recepcionista IA</a>
+        <a href="#demo" class="btn btn-ghost btn-lg">Ver demo en vivo</a>
+      </div>
+      <div class="hero-stats fade-up delay-4">
+        <div><strong>24/7</strong><span>Disponibilidad</span></div>
+        <div><strong>0</strong><span>Llamadas perdidas</span></div>
+        <div><strong>&lt;2s</strong><span>Tiempo de respuesta</span></div>
+      </div>
+    </div>
+
+    <div class="hero-mock fade-up delay-3" id="demo">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="chat">
+          <div class="chat-header">
+            <div class="chat-avatar">🤖</div>
+            <div>
+              <div class="chat-name">AgendeX</div>
+              <div class="chat-status">● en línea</div>
+            </div>
+          </div>
+          <div class="chat-body" id="chat-body"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGOS / SOCIAL PROOF -->
+  <section class="proof">
+    <div class="container">
+      <p class="proof-label">Ya confían en su recepcionista IA</p>
+      <div class="proof-logos">
+        <span>💇 Peluquerías</span>
+        <span>💅 Centros de estética</span>
+        <span>🦷 Clínicas dentales</span>
+        <span>💪 Gimnasios</span>
+        <span>🐾 Veterinarias</span>
+        <span>💆 Spas &amp; masajes</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARACTERISTICAS -->
+  <section class="section" id="caracteristicas">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Características</span>
+        <h2>Todo lo que necesita tu agenda, con un solo mensaje</h2>
+        <p>Diseñado para negocios de citas: peluquerías, clínicas, gimnasios y mucho más.</p>
+      </div>
+      <div class="grid-cards">
+        <div class="card dock-item reveal-fade">
+          <div class="card-icon">📅</div>
+          <h3>Agenda en Google Calendar</h3>
+          <p>Cada cita se crea automáticamente en tu calendario real.</p>
+        </div>
+        <div class="card dock-item reveal-fade">
+          <div class="card-icon">💬</div>
+          <h3>Directo por WhatsApp</h3>
+          <p>Tus clientes escriben por mensaje que usan a diario, el bot los atenderá amablemente y resolverá sus dudas.</p>
+        </div>
+        <div class="card dock-item reveal-fade">
+          <div class="card-icon">🔒</div>
+          <h3>Privacidad por cliente</h3>
+          <p>Cada persona solo puede ver, modificar o cancelar sus propias citas. Nunca las de otro cliente.</p>
+        </div>
+        <div class="card dock-item reveal-fade">
+          <div class="card-icon">⚡</div>
+          <h3>Respuesta instantánea</h3>
+          <p>Sin esperas, sin llamadas perdidas. El asistente responde en segundos, a cualquier hora del día.</p>
+        </div>
+        <div class="card dock-item reveal-fade">
+          <div class="card-icon">🧠</div>
+          <h3>Conversación natural con IA</h3>
+          <p>Entiende el lenguaje humano gracias a IA generativa: cambia servicios, reprograma o cancela sin fricción.</p>
+        </div>
+        <div class="card dock-item reveal-fade">
+          <div class="card-icon">🎨</div>
+          <h3>100% personalizable</h3>
+          <p>Nombre, servicios, horarios y tono se adaptan a tu marca en minutos.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section class="section section-alt" id="como-funciona">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Cómo funciona</span>
+        <h2>De un mensaje a una reserva de tu cliente</h2>
+      </div>
+      <div class="steps">
+        <div class="step dock-item reveal-fade">
+          <div class="step-num">1</div>
+          <h3>El cliente escribe</h3>
+          <p>El bot agenda y resuelve dudas.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step dock-item reveal-fade">
+          <div class="step-num">2</div>
+          <h3>La IA entiende la petición</h3>
+          <p>Detecta el servicio, propone horarios disponibles reales, consultando tu Google Calendar.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step dock-item reveal-fade">
+          <div class="step-num">3</div>
+          <h3>Confirmación con un toque</h3>
+          <p>El cliente elige día y hora del servicio, sin errores.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step dock-item reveal-fade">
+          <div class="step-num">4</div>
+          <h3>Cita en tu calendario</h3>
+          <p>Se crea al instante en Google Calendar. Tú solo te preocupas de atender al cliente.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLANES -->
+  <section class="section" id="planes">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Planes</span>
+        <h2>Elige el plan para tu negocio</h2>
+        <p>Sin permanencia. Empieza en días, no en meses.</p>
+      </div>
+      <div class="grid-pricing">
+        <div class="price-card reveal">
+          <h3>Prueba gratuita</h3>
+          <p class="price-desc">Para probar AgendeX sin compromiso</p>
+          <div class="price">Gratis</div>
+          <ul>
+            <li>Atención por WhatsApp</li>
+            <li>Conectado a tu Google Calendar</li>
+            <li>Agenda, cancela y modifica citas</li>
+            <li>Duración limitada</li>
+          </ul>
+          <a href="#contacto" class="btn btn-outline btn-block">Empezar gratis</a>
+        </div>
+        <div class="price-card price-featured reveal">
+          <div class="price-tag">Plan definitivo</div>
+          <h3>AgendeX Pro</h3>
+          <p class="price-desc">Para negocios que quieren su recepcionista IA sin límites</p>
+          <div class="price">Precio a consultar</div>
+          <a href="#contacto" class="btn btn-primary btn-block">Hablar con ventas</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section section-alt" id="faq">
+    <div class="container container-narrow">
+      <div class="section-head reveal">
+        <span class="eyebrow">Preguntas frecuentes</span>
+        <h2>Todo lo que quieres saber</h2>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item dock-item reveal-fade" open>
+          <summary>¿Necesito saber programar para usarlo?</summary>
+          <p>No. Nosotros configuramos el bot, lo conectamos a tu Google Calendar y lo dejamos funcionando. Tú solo indicas tus servicios y horarios.</p>
+        </details>
+        <details class="faq-item dock-item reveal-fade">
+          <summary>¿Puede chocar con reservas hechas por teléfono?</summary>
+          <p>No, porque el bot verifica la disponibilidad real en tu Google Calendar justo antes de confirmar cada cita, evitando dobles reservas.</p>
+        </details>
+        <details class="faq-item dock-item reveal-fade">
+          <summary>¿Funciona en WhatsApp?</summary>
+          <p>Sí, WhatsApp es el canal de lanzamiento de AgendeX: tus clientes escriben ahí mismo, sin instalar nada nuevo.</p>
+        </details>
+        <details class="faq-item dock-item reveal-fade">
+          <summary>¿Qué pasa si un cliente quiere cancelar o cambiar su cita?</summary>
+          <p>Puede hacerlo directamente por chat. El sistema solo le muestra y permite modificar sus propias citas, nunca las de otros clientes.</p>
+        </details>
+        <details class="faq-item dock-item reveal-fade">
+          <summary>¿Cuánto tarda en estar listo mi bot?</summary>
+          <p>Normalmente entre 2 y 5 días laborables desde que nos das los datos de tu negocio (servicios, horarios y calendario).</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA / CONTACTO -->
+  <section class="section cta-final" id="contacto">
+    <div class="container cta-inner reveal">
+      <h2>¿Listo para que tu recepcionista IA empiece hoy mismo?</h2>
+      <p>Cuéntanos sobre tu negocio y te preparamos una demo personalizada en menos de 48h.</p>
+      <form class="contact-form" id="contact-form">
+        <input type="hidden" name="access_key" value="55db7207-7c02-431f-950c-45ca3096aedf">
+        <input type="hidden" name="subject" value="Nueva solicitud de demo — AgendeX">
+        <input type="text" name="Nombre del negocio" placeholder="Nombre del negocio" required>
+        <input type="email" name="Email de contacto" placeholder="Email de contacto" required>
+        <input type="tel" name="Teléfono" placeholder="Teléfono (opcional)">
+        <textarea name="Cuéntanos sobre tu negocio" placeholder="Cuéntanos un poco más de tu negocio (opcional)" rows="4"></textarea>
+        <button type="submit" class="btn btn-primary btn-lg">Solicitar demo gratuita</button>
+      </form>
+      <div class="cta-success" id="cta-success">
+        <div class="cta-success-icon">🎉</div>
+        <h3>¡Gracias por tu confianza!</h3>
+        <p>Hemos recibido tu solicitud.<br>Nuestro equipo te contactará a la mayor brevedad posible.</p>
+      </div>
+      <p class="cta-note" id="cta-note">Sin compromiso · Respuesta en menos de 48h</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <span>© 2026 AgendeX. Todos los derechos reservados.</span>
+    <span>Hecho con 🤖 para negocios que no quieren perder ni un cliente.</span>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
