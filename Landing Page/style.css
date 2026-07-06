@@ -655,7 +655,7 @@ h1 {
   .section { padding: 60px 0; }
   .section-head { margin-bottom: 36px; }
   .price-card { padding: 28px 22px; }
-  .contact-form input { font-size: 16px; }
+  .contact-form input, .contact-form textarea { font-size: 16px; }
   .proof-logos { gap: 18px; font-size: 0.85rem; }
   .footer-inner { flex-direction: column; text-align: center; }
 }
