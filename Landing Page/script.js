@@ -144,6 +144,7 @@ document.querySelectorAll('.btn, .dock-item').forEach((btn) => {
 // Formulario de contacto: envía el lead por email vía Web3Forms
 const form = document.getElementById('contact-form');
 const ctaNote = document.getElementById('cta-note');
+const ctaSuccess = document.getElementById('cta-success');
 
 if (form) {
   form.addEventListener('submit', async (e) => {
@@ -162,20 +163,28 @@ if (form) {
       const result = await response.json();
 
       if (result.success) {
-        button.textContent = '¡Enviado! Te contactaremos pronto ✅';
-        ctaNote.textContent = 'Hemos recibido tu solicitud. Revisa tu email en las próximas 48h.';
         form.reset();
+        form.classList.add('is-hidden');
+        ctaNote.style.display = 'none';
+        ctaSuccess.classList.add('is-visible');
+
+        setTimeout(() => {
+          ctaSuccess.classList.remove('is-visible');
+          form.classList.remove('is-hidden');
+          ctaNote.style.display = '';
+          button.textContent = originalText;
+          button.disabled = false;
+        }, 6000);
       } else {
         throw new Error(result.message || 'Error desconocido');
       }
     } catch (err) {
       button.textContent = 'Error al enviar, inténtalo de nuevo';
       ctaNote.textContent = 'Ha ocurrido un problema. Prueba de nuevo en unos minutos.';
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.disabled = false;
+      }, 4000);
     }
-
-    setTimeout(() => {
-      button.textContent = originalText;
-      button.disabled = false;
-    }, 4000);
   });
 }
