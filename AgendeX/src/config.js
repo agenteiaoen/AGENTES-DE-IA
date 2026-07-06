@@ -6,8 +6,10 @@ import 'dotenv/config';
 // ============================================================
 export const config = {
   // Nombre del negocio tal como lo verá el cliente en los mensajes.
-  // El asistente se llama AgendeX, pero el negocio real que atiende es ZubAL Estilistas (Zaragoza).
   businessName: 'ZubAL Estilistas ✨',
+
+  // Nombre con el que el asistente se presenta al cliente (no el del negocio).
+  assistantName: 'AgendeX',
 
   // Zona horaria del negocio (formato IANA, ej. Europe/Madrid, America/Mexico_City).
   timezone: 'Europe/Madrid',
