@@ -19,7 +19,18 @@ function fechaActualLabel() {
   const mes = MESES[ahora.getMonth()];
   const anio = ahora.getFullYear();
   const iso = ahora.toISOString().slice(0, 10);
-  return `Hoy es ${dow} ${dia} de ${mes} de ${anio} (fecha ISO: ${iso}).`;
+
+  const manana = new Date(ahora);
+  manana.setDate(manana.getDate() + 1);
+  const pasadoManana = new Date(ahora);
+  pasadoManana.setDate(pasadoManana.getDate() + 2);
+  const isoManana = manana.toISOString().slice(0, 10);
+  const isoPasadoManana = pasadoManana.toISOString().slice(0, 10);
+
+  // Le damos las fechas de "mañana" y "pasado mañana" ya calculadas: pedirle
+  // al modelo que sume días a mano es la causa más habitual de que se líe
+  // de día (off-by-one) y luego parezca que "cambia de opinión" solo.
+  return `Hoy es ${dow} ${dia} de ${mes} de ${anio} (fecha ISO: ${iso}). Mañana es ${DIAS_SEMANA[manana.getDay()]} ${isoManana}. Pasado mañana es ${DIAS_SEMANA[pasadoManana.getDay()]} ${isoPasadoManana}. Usa siempre estas fechas ISO ya calculadas cuando el cliente diga "hoy", "mañana" o "pasado mañana" — nunca calcules tú la suma de días.`;
 }
 
 function horarioLabel() {
@@ -72,8 +83,9 @@ Reglas de la conversación:
 3. Antes de proponer o confirmar un horario (nuevo o de un cambio), llama SIEMPRE a "consultar_huecos" o "buscar_proximo_hueco" — nunca inventes disponibilidad de memoria.
 4. Propón un día y hora con resumen claro (servicio, día, hora). Cuando el cliente esté de acuerdo (diga "sí", "ok", "dale", "perfecto", "acuerdo", o similar), llama directamente a "crear_cita" o "modificar_cita" según corresponda, sin pedir segunda confirmación. Solo un mensaje de confirmación final al terminar.
 5. Con "cancelar_cita", igual: cuando el cliente confirme que quiere cancelar, ejecútalo directamente sin pedir otra confirmación.
-6. Sé breve, cercano y natural, como en una conversación real de WhatsApp entre personas — frases cortas, sin sonar a guion ni a formulario. Usa como mucho un par de emojis por mensaje. Responde siempre en español.
-7. Si una herramienta devuelve un error o que no hay huecos, explícaselo al cliente con naturalidad y ofrece la alternativa más cercana con "buscar_proximo_hueco" en vez de dejarlo sin opciones.`;
+6. Sé breve, cercano y natural, como en una conversación real de WhatsApp entre personas — 1 o 2 frases cortas por mensaje, sin sonar a guion ni a formulario, sin repetir en cada respuesta lo que el cliente ya sabe (su nombre, el servicio, saludos ya dados). Usa como mucho un emoji por mensaje, no en todos. Responde siempre en español.
+8. En cuanto propongas un día y hora concretos, NO los cambies ni ofrezcas alternativas nuevas por tu cuenta — quédate con esa misma propuesta hasta que el cliente la confirme, pida explícitamente otro día/hora, o una herramienta te diga que ya no está libre. No repitas la pregunta de "¿qué día y hora te viene bien?" si el cliente ya te lo dijo: usa exactamente lo que pidió (con las fechas de "mañana"/"pasado mañana" ya calculadas arriba) y confirma esa opción o la más cercana a esa si no hay hueco exacto, sin dar varias vueltas.
+9. Si una herramienta devuelve un error o que no hay huecos, explícaselo al cliente con naturalidad UNA vez y ofrece la alternativa más cercana con "buscar_proximo_hueco" — no repitas la misma pregunta ni la misma explicación dos veces seguidas.`;
 }
 
 // Segunda capa de seguridad, independiente del modelo: si el mensaje del
