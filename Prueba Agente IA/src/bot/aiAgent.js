@@ -194,7 +194,13 @@ export async function handleTurn(clientId, clientLabel, userText, clientPhone) {
   const messages = [{ role: 'system', content: system }, ...session.history, { role: 'user', content: userText }];
 
   // Los 503/429 de Groq suelen ser transitorios (servidor con mucha carga) —
-  // reintentamos una vez antes de rendirnos.
+  // reintentamos una vez antes de rendirnos. También reintentamos si el
+  // modelo genera una llamada a función mal formada ("tool_use_failed"):
+  // es un fallo esporádico del propio modelo, no del prompt, y casi siempre
+  // se resuelve solo en el segundo intento. Si no reintentáramos, ese turno
+  // se perdía sin guardarse en el historial y la conversación "olvidaba" lo
+  // que el cliente acababa de decir (día, hora, servicio), dando la sensación
+  // de que el bot cambiaba de opinión sin motivo.
   async function crearCompletionConReintento() {
     try {
       return await groq.chat.completions.create({
@@ -204,8 +210,9 @@ export async function handleTurn(clientId, clientLabel, userText, clientPhone) {
         tools: herramientasGroq,
       });
     } catch (err) {
-      if (err.status === 503) {
-        await sleep(1500);
+      const esToolUseFallido = err.status === 400 && err.error?.error?.code === 'tool_use_failed';
+      if (err.status === 503 || esToolUseFallido) {
+        await sleep(esToolUseFallido ? 400 : 1500);
         return groq.chat.completions.create({
           model: config.groq.model,
           max_tokens: 1024,
