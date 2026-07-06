@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { Telegraf, Markup } from 'telegraf';
+import { Telegraf } from 'telegraf';
 import { config } from '../config.js';
 
 /**
@@ -41,15 +41,14 @@ function obtenerSecretoWebhook() {
  * NO metes aquí lógica de citas — eso vive en conversation.js.
  *
  * En WhatsApp el clientId ya es el número de teléfono real, así que el
- * teléfono llega siempre. En Telegram no hay forma de conocerlo salvo que el
- * cliente lo comparta explícitamente, así que se lo pedimos una vez (teclado
- * nativo "compartir contacto" de Telegram, no un botón de menú de conversación)
- * y lo guardamos en memoria por clientId para las citas que reserve después.
+ * teléfono llega siempre sin pedirlo. En Telegram NO se pide activamente
+ * (a propósito, para que la conversación sea igual en ambos canales) — si
+ * el cliente comparte su contacto por su cuenta (poco habitual), se guarda
+ * y se usa; si no, la cita se crea sin teléfono, sin bloquear el flujo.
  */
 export function createTelegramProvider(onMessage) {
   const bot = new Telegraf(config.telegram.token);
   const telefonoPorCliente = new Map();
-  const yaSePidioContacto = new Set();
 
   const provider = {
     async sendMessage(clientId, text) {
@@ -59,16 +58,6 @@ export function createTelegramProvider(onMessage) {
       bot.on('text', async (ctx) => {
         try {
           const clientId = String(ctx.from.id);
-
-          if (!telefonoPorCliente.has(clientId) && !yaSePidioContacto.has(clientId)) {
-            yaSePidioContacto.add(clientId);
-            await ctx.reply(
-              '📱 Si quieres, comparte tu teléfono para que quede guardado en tu cita (opcional, puedes ignorar esto y seguir escribiendo).',
-              Markup.keyboard([Markup.button.contactRequest('📱 Compartir mi teléfono')])
-                .resize()
-                .oneTime()
-            ).catch(() => {});
-          }
 
           await onMessage(
             {
@@ -92,7 +81,7 @@ export function createTelegramProvider(onMessage) {
           // nunca un contacto de otra persona reenviado.
           if (ctx.message.contact.user_id === ctx.from.id) {
             telefonoPorCliente.set(clientId, normalizarTelefono(ctx.message.contact.phone_number));
-            await ctx.reply('¡Gracias! 📱 Ya lo tengo guardado.', Markup.removeKeyboard()).catch(() => {});
+            await ctx.reply('¡Gracias! 📱 Ya lo tengo guardado.').catch(() => {});
           }
         } catch (err) {
           console.error('Error procesando contacto:', err);

@@ -65,7 +65,7 @@ export const toolDeclarations = [
       type: 'object',
       properties: {
         servicioId: { type: 'string' },
-        nombreCliente: { type: 'string', description: 'Nombre con el que el cliente se ha identificado en la conversación' },
+        nombreCliente: { type: 'string', description: 'Nombre y apellidos completos con los que el cliente se ha identificado en la conversación' },
         fechaHoraInicioISO: { type: 'string', description: 'Fecha y hora de inicio exacta de un hueco devuelto por consultar_huecos, en formato ISO 8601' },
       },
       required: ['servicioId', 'nombreCliente', 'fechaHoraInicioISO'],
