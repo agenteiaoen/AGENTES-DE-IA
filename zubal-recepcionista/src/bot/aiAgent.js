@@ -1,10 +1,10 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { toZonedTime } from 'date-fns-tz';
 import { config } from '../config.js';
 import { toolDeclarations, createToolExecutor } from './tools.js';
 import { listAppointmentHistory } from '../calendar/googleCalendar.js';
 
-const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+const groq = new Groq({ apiKey: config.groq.apiKey });
 
 const DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 const MESES = [
@@ -79,7 +79,7 @@ Reglas de la conversación:
 // Segunda capa de seguridad, independiente del modelo: si el mensaje del
 // cliente contiene un intento evidente de manipular al agente (ignorar
 // instrucciones, cambiar de rol, sacarle el prompt...), respondemos con un
-// mensaje fijo SIN llamar a Gemini — ni gasta cuota ni depende de que el
+// mensaje fijo SIN llamar a la IA — ni gasta cuota ni depende de que el
 // modelo "decida" seguir las reglas.
 const PATRONES_MANIPULACION = [
   /ignora\s+(tus|las)?\s*instruccion/i,
@@ -99,7 +99,47 @@ function esIntentoDeManipulacion(texto) {
 const RESPUESTA_FUERA_DE_ALCANCE =
   'Solo puedo echarte una mano con tu cita aquí 😊 ¿Quieres reservar, ver, cambiar o cancelar algo?';
 
-// Sesiones de conversación en memoria por cliente (historial de turnos con Gemini).
+// Tercera capa: si un cliente manda muchos mensajes seguidos en poco tiempo,
+// o repite el mismo mensaje varias veces (a propósito o sin querer), cortamos
+// ANTES de llamar a la IA y le pedimos amablemente los datos mínimos para
+// agendar. Esto protege la cuota de peticiones compartida (Groq la reparte
+// entre todos los clientes que escriban a la vez) de un uso malintencionado
+// que intente saturarla sin ninguna intención real de reservar.
+const VENTANA_FLOOD_MS = 20_000;
+const MAX_MENSAJES_EN_VENTANA = 6;
+const historialAntiFlood = new Map(); // clientId -> [{ ts, texto }]
+
+const normalizarParaComparar = (texto) => (texto || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+function esFloodOSpam(clientId, texto) {
+  const ahora = Date.now();
+  const registroPrevio = historialAntiFlood.get(clientId) || [];
+  const recientes = registroPrevio.filter((r) => ahora - r.ts < VENTANA_FLOOD_MS);
+  recientes.push({ ts: ahora, texto: normalizarParaComparar(texto) });
+  // Nos quedamos como mucho con los últimos 10 para no acumular memoria indefinidamente.
+  historialAntiFlood.set(clientId, recientes.slice(-10));
+
+  if (recientes.length > MAX_MENSAJES_EN_VENTANA) return true;
+
+  const ultimosTres = recientes.slice(-3);
+  if (ultimosTres.length === 3 && ultimosTres[0].texto.length > 0 && ultimosTres.every((r) => r.texto === ultimosTres[0].texto)) {
+    return true;
+  }
+  return false;
+}
+
+const RESPUESTA_FLOOD =
+  'Para poder ayudarte necesito lo básico 😊 Dime qué servicio quieres, para qué día y hora te viene bien, y tu nombre — y seguimos con la cita.';
+
+// Groq usa el formato de function calling de OpenAI: {type:'function', function:{...}}.
+// tools.js define las herramientas en formato genérico {name, description, parameters};
+// aquí las envolvemos una sola vez.
+const herramientasGroq = toolDeclarations.map((t) => ({
+  type: 'function',
+  function: { name: t.name, description: t.description, parameters: t.parameters },
+}));
+
+// Sesiones de conversación en memoria por cliente (historial de turnos, sin el system prompt).
 const sessions = new Map();
 
 function getSession(clientId) {
@@ -113,6 +153,8 @@ export function resetSession(clientId) {
   sessions.delete(clientId);
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 /**
  * Procesa un turno de conversación completo: manda el mensaje del cliente al
  * modelo, ejecuta las tools que pida (encadenando llamadas si hace falta) y
@@ -123,6 +165,10 @@ export async function handleTurn(clientId, clientLabel, userText, clientPhone) {
     return RESPUESTA_FUERA_DE_ALCANCE;
   }
 
+  if (esFloodOSpam(clientId, userText)) {
+    return RESPUESTA_FLOOD;
+  }
+
   const session = getSession(clientId);
   const esNuevaConversacion = session.history.length === 0;
 
@@ -131,57 +177,68 @@ export async function handleTurn(clientId, clientLabel, userText, clientPhone) {
     yaHaVenido = (await listAppointmentHistory(clientId, 1)).length > 0;
   }
 
-  const model = genAI.getGenerativeModel({
-    model: config.gemini.model,
-    systemInstruction: buildSystemInstruction({ yaHaVenido, nombreConocido: clientLabel }),
-    tools: [{ functionDeclarations: toolDeclarations }],
-  });
-
-  const chat = model.startChat({ history: session.history });
+  const system = buildSystemInstruction({ yaHaVenido, nombreConocido: clientLabel });
   const executeTool = createToolExecutor(clientId, clientPhone);
+  const messages = [{ role: 'system', content: system }, ...session.history, { role: 'user', content: userText }];
 
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-  // Los 503 "modelo con mucha demanda" de Gemini son transitorios y suelen
-  // resolverse solos en 1-2 segundos — reintentamos una vez antes de rendirnos.
-  async function sendConReintento(msg) {
+  // Los 503/429 de Groq suelen ser transitorios (servidor con mucha carga) —
+  // reintentamos una vez antes de rendirnos.
+  async function crearCompletionConReintento() {
     try {
-      return await chat.sendMessage(msg);
+      return await groq.chat.completions.create({
+        model: config.groq.model,
+        max_tokens: 1024,
+        messages,
+        tools: herramientasGroq,
+      });
     } catch (err) {
       if (err.status === 503) {
         await sleep(1500);
-        return chat.sendMessage(msg);
+        return groq.chat.completions.create({
+          model: config.groq.model,
+          max_tokens: 1024,
+          messages,
+          tools: herramientasGroq,
+        });
       }
       throw err;
     }
   }
 
   try {
-    let result = await sendConReintento(userText);
-    let calls = result.response.functionCalls();
+    let completion = await crearCompletionConReintento();
+    let choice = completion.choices[0];
 
-    // Encadena llamadas a herramientas hasta que el modelo dé una respuesta de texto final.
+    // Encadena llamadas a herramientas hasta que el modelo dé una respuesta final.
     let vueltas = 0;
-    while (calls && calls.length > 0 && vueltas < 5) {
-      const responses = await Promise.all(
-        calls.map(async (call) => ({
-          functionResponse: { name: call.name, response: await executeTool(call.name, call.args || {}) },
+    while (choice.finish_reason === 'tool_calls' && vueltas < 5) {
+      messages.push(choice.message);
+
+      const toolCalls = choice.message.tool_calls || [];
+      const toolResults = await Promise.all(
+        toolCalls.map(async (tc) => ({
+          role: 'tool',
+          tool_call_id: tc.id,
+          content: JSON.stringify(await executeTool(tc.function.name, JSON.parse(tc.function.arguments || '{}'))),
         }))
       );
-      result = await sendConReintento(responses);
-      calls = result.response.functionCalls();
+      messages.push(...toolResults);
+
+      completion = await crearCompletionConReintento();
+      choice = completion.choices[0];
       vueltas += 1;
     }
 
-    session.history = await chat.getHistory();
-    return result.response.text();
+    messages.push(choice.message);
+    session.history = messages.slice(1); // quitamos el system prompt, se reconstruye cada turno
+    return (choice.message.content || '').trim() || 'Perdona, ¿me lo repites? 😅';
   } catch (err) {
-    // No dejamos que un fallo de Gemini (límite de peticiones, timeout, etc.)
+    // No dejamos que un fallo de la IA (límite de peticiones, timeout, etc.)
     // tumbe la conversación con un error genérico — respondemos algo útil y
     // NO guardamos este turno en el historial, para que el cliente pueda
     // repetir su mensaje sin que quede "colgado" a medias.
-    if (err.status === 429 || /quota|rate.?limit/i.test(err.message || '')) {
-      console.error('Gemini rate limit:', err.message);
+    if (err.status === 429) {
+      console.error('Límite de peticiones de Groq:', err.message);
       return 'Estoy recibiendo muchos mensajes ahora mismo 🙏 Dame unos segundos y vuelve a escribirme, por favor.';
     }
     console.error('Error del agente de IA:', err);

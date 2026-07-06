@@ -49,15 +49,14 @@ export const config = {
     token: process.env.TELEGRAM_BOT_TOKEN,
   },
 
-  // Modelo de IA (Google Gemini) que lleva la conversación en lenguaje
-  // natural. En el nivel gratuito, gemini-2.5-flash tiene un tope de 5
-  // peticiones/minuto pero sin límite diario tan bajo como flash-lite (que
-  // en proyectos nuevos puede limitarse a ~20/día) — mejor para conversación
-  // real espaciada en el tiempo. Si el negocio crece, activa facturación en
-  // Google Cloud (sigue siendo muy barato) para subir estos límites.
-  gemini: {
-    apiKey: process.env.GEMINI_API_KEY,
-    model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+  // Modelo de IA (Groq, que aloja modelos Llama de Meta) que lleva la
+  // conversación en lenguaje natural. Nivel gratuito de Groq: 14.400
+  // peticiones/día y 30/minuto — de sobra para el volumen real de un
+  // negocio, sin el límite tan bajo (20/día) que tenía el nivel gratuito
+  // de Gemini para este proyecto.
+  groq: {
+    apiKey: process.env.GROQ_API_KEY,
+    model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
   },
 
   port: process.env.PORT || 3000,

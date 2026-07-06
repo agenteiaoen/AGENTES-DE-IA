@@ -5,7 +5,8 @@
 ## ✨ Características
 
 - 📅 **Reservar citas** - Conversación 100% en lenguaje natural (sin botones): el cliente dice su nombre, qué necesita y cuándo le viene bien, tal cual escribiría por WhatsApp
-- 🧠 **Motor conversacional con IA** - Google Gemini entiende la conversación y decide qué consultar en el calendario (ver `docs/conversation-flow.md`)
+- 🧠 **Motor conversacional con IA** - Groq (Llama 3.3 70B) entiende la conversación y decide qué consultar en el calendario (ver `docs/conversation-flow.md`)
+- 🛡️ **Anti-spam** - Detecta mensajes repetidos o en ráfaga y corta antes de gastar cuota de IA, pidiendo amablemente los datos para agendar
 - 🔎 **Ver mis citas** - Lista de citas reservadas
 - ✏️ **Modificar cita** - Cambiar fecha/hora de una cita
 - ❌ **Cancelar cita** - Anular reserva si hay imprevisto
@@ -43,9 +44,9 @@ Sigue los pasos en `docs/google-calendar-setup.md` para:
 - Compartir el calendario del negocio con esa cuenta
 - Obtener las credenciales necesarias
 
-### 5. Conseguir una API key de Google Gemini
+### 5. Conseguir una API key de Groq
 
-Entra en **https://aistudio.google.com/app/apikey**, inicia sesión con tu cuenta de Google y pulsa "Create API key". Es gratis para este volumen de uso.
+Entra en **https://console.groq.com/keys**, inicia sesión (puedes usar tu cuenta de Google) y pulsa "Create API Key". Es gratis, no pide tarjeta — 14.400 peticiones/día y 30/minuto en el nivel gratuito.
 
 ### 6. Crear archivo `.env`
 
@@ -53,7 +54,7 @@ Basándote en `.env.example`, crea un `.env` real:
 
 ```bash
 TELEGRAM_BOT_TOKEN=tu_token_aqui
-GEMINI_API_KEY=tu_api_key_de_gemini
+GROQ_API_KEY=tu_api_key_de_groq
 GOOGLE_CLIENT_EMAIL=tu_email_de_servicio@tu_proyecto.iam.gserviceaccount.com
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 GOOGLE_CALENDAR_ID=tu_calendario_id@google.com
@@ -87,7 +88,7 @@ zubal-recepcionista/
     │   └── telegramProvider.js    # Integración Telegram
     ├── bot/
     │   ├── conversation.js        # Punto de entrada de cada mensaje
-    │   ├── aiAgent.js             # Motor conversacional (Gemini + system prompt)
+    │   ├── aiAgent.js             # Motor conversacional (Groq + system prompt + anti-flood)
     │   └── tools.js               # Funciones que la IA puede llamar (calendario)
     └── calendar/
         └── googleCalendar.js      # Integración Google Calendar
@@ -159,7 +160,7 @@ El bot está preparado para deployarse en:
 Si algo no funciona:
 
 1. **Bot no responde** - Verifica que el token en `.env` sea correcto
-2. **Bot responde con error genérico a todo** - Casi siempre es que falta o es inválida `GEMINI_API_KEY`
+2. **Bot responde con error genérico a todo** - Casi siempre es que falta o es inválida `GROQ_API_KEY`
 3. **No se agregan citas** - Comprueba las credenciales de Google Calendar
 4. **Citas duplicadas** - No debería pasar, pero si pasa, revisa que Google Calendar esté correctamente compartido
 

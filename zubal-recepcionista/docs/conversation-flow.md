@@ -1,7 +1,7 @@
 # 💬 Flujo de Conversación
 
 El bot ya no usa una máquina de estados con botones: cada mensaje del cliente
-se manda tal cual a un agente de IA (Google Gemini, ver `src/bot/aiAgent.js`)
+se manda tal cual a un agente de IA (Groq/Llama 3.3 70B, ver `src/bot/aiAgent.js`)
 que lleva la conversación en lenguaje natural y decide qué herramientas de
 calendario llamar (`src/bot/tools.js`). Esto imita cómo se comportará el bot
 el día que se migre a WhatsApp (sin botones, conversación fluida).
@@ -12,19 +12,19 @@ el día que se migre a WhatsApp (sin botones, conversación fluida).
 Cliente escribe texto
         │
         ▼
-conversation.js ──► aiAgent.js ──► Gemini (system prompt con negocio,
+conversation.js ──► aiAgent.js ──► Groq (system prompt con negocio,
         ▲               │          servicios, horario y fecha de hoy)
         │               ▼
-        │        ¿Gemini pide llamar a una tool?
+        │        ¿Groq pide llamar a una tool?
         │               │ sí
         │               ▼
         │        tools.js ejecuta la función real
         │        (consultar Calendar, crear cita...)
         │               │
-        │               └──► resultado real vuelve a Gemini
+        │               └──► resultado real vuelve a Groq
         │                    (puede encadenar varias tools)
         │
-        └── texto final de Gemini → se envía al cliente
+        └── texto final de Groq → se envía al cliente
 ```
 
 - El **historial de la conversación** vive en memoria por `clientId` (se resetea con `/start` o si el proceso se reinicia).
@@ -54,7 +54,7 @@ Cliente: sí
 Bot: ¡Listo! 🎉 Tu tinte queda reservado el jueves 9 de julio a las 10:00. ¡Te esperamos!
 ```
 
-Por dentro, en el paso "el jueves por la mañana" Gemini llamó a la tool `consultar_huecos` con el día real (nunca inventa disponibilidad), y en el "sí" final llamó a `crear_cita`.
+Por dentro, en el paso "el jueves por la mañana" Groq llamó a la tool `consultar_huecos` con el día real (nunca inventa disponibilidad), y en el "sí" final llamó a `crear_cita`.
 
 ## 🔎 Ver, cancelar y modificar citas
 
@@ -78,6 +78,10 @@ Cada cita guarda también el teléfono del cliente si se conoce (nombre, servici
 
 Para un negocio nuevo, sigue editando **solo `src/config.js`** (nombre, servicios, horario). El agente de IA usa esos datos directamente en su system prompt — no hace falta enseñarle nada más.
 
-## 🔑 Requisito: API key de Gemini
+## 🔑 Requisito: API key de Groq
 
-El bot no arranca de forma útil sin `GEMINI_API_KEY` en el `.env` (gratis en https://aistudio.google.com/app/apikey). Sin ella, Gemini rechazará las peticiones y el bot no podrá responder.
+El bot no arranca de forma útil sin `GROQ_API_KEY` en el `.env` (gratis, sin tarjeta, en https://console.groq.com/keys). Sin ella, Groq rechazará las peticiones y el bot no podrá responder.
+
+## 🛡️ Anti-flood
+
+Antes de llamar a la IA, `aiAgent.js` comprueba si el cliente está mandando mensajes en ráfaga (más de 6 en 20 segundos) o repitiendo literalmente el mismo mensaje 3 veces seguidas. Si es así, responde con un mensaje fijo pidiendo servicio, día/hora y nombre — sin gastar ninguna petición a la IA. Protege la cuota gratuita compartida (30 peticiones/minuto entre todos los clientes) de un intento de saturarla.
