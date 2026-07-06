@@ -6,7 +6,8 @@ import 'dotenv/config';
 // ============================================================
 export const config = {
   // Nombre del negocio tal como lo verá el cliente en los mensajes.
-  businessName: 'ZubAL Estilistas ✨',
+  // Nombre de ejemplo genérico para la demo (no un negocio real).
+  businessName: 'Estilistas XYZ ✨',
 
   // Nombre con el que el asistente se presenta al cliente (no el del negocio).
   assistantName: 'AgendeX',
@@ -27,7 +28,7 @@ export const config = {
     { id: 'tratamiento', nombre: '🧴 Tratamiento Capilar', duracionMin: 45 },
   ],
 
-  // Horario laboral real de ZubAL Estilistas: lunes a viernes 10-20, sábado 10-14.
+  // Horario laboral de ejemplo: lunes a viernes 10-20, sábado 10-14.
   // 0 = domingo, 1 = lunes ... 6 = sábado.
   businessHours: {
     1: [[10, 20]], // lunes
